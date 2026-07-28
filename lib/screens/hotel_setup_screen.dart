@@ -43,6 +43,7 @@ class _HotelSetupScreenState extends State<HotelSetupScreen> {
   final TextEditingController _accountNumberController = TextEditingController();
   final TextEditingController _ifscController = TextEditingController();
   final TextEditingController _priceController = TextEditingController(text: '42.37');
+  final TextEditingController _totalSlotsController = TextEditingController(text: '10');
 
   @override
   void initState() {
@@ -62,6 +63,7 @@ class _HotelSetupScreenState extends State<HotelSetupScreen> {
     _accountNumberController.dispose();
     _ifscController.dispose();
     _priceController.dispose();
+    _totalSlotsController.dispose();
     super.dispose();
   }
 
@@ -627,6 +629,7 @@ class _HotelSetupScreenState extends State<HotelSetupScreen> {
               _buildImageUpload('Upload Your Gst Image'),
               
               // NEW FIELDS BASED ON EXTENDED IMAGES
+              _buildTextField('Enter Total Parking Slots', controller: _totalSlotsController, keyboardType: TextInputType.number),
               _buildTextField('Enter Price per night (Min 42.37)', controller: _priceController, keyboardType: const TextInputType.numberWithOptions(decimal: true)),
               _buildSwitch('Free Breakfast'),
               if (_freeBreakfast) _buildTextField('Enter Breakfast Name'),
@@ -663,6 +666,9 @@ class _HotelSetupScreenState extends State<HotelSetupScreen> {
                     
                     double enteredPrice = double.tryParse(_priceController.text) ?? 0.0;
                     if (enteredPrice < 42.37) { showError('Price cannot be less than 42.37'); return; }
+
+                    int totalSlots = int.tryParse(_totalSlotsController.text) ?? 10;
+                    if (totalSlots < 1) { showError('Total slots must be at least 1'); return; }
 
                     final requiredImages = [
                       'Upload Your Hotel Image', 'Upload Your Business Proof', 'Front Side', 
@@ -728,7 +734,7 @@ class _HotelSetupScreenState extends State<HotelSetupScreen> {
                         latitude: _latitude,
                         longitude: _longitude,
                         pricePerNight: enteredPrice,
-                        totalRooms: 10,
+                        totalRooms: totalSlots,
                         amenities: selectedAmenities,
                       ));
                       

@@ -55,6 +55,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late TextEditingController _addressController;
   late TextEditingController _pincodeController;
   late TextEditingController _priceController;
+  late TextEditingController _totalSlotsController;
   
   String? _selectedState;
   String? _selectedCity;
@@ -78,6 +79,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _addressController = TextEditingController(text: widget.profile?.address ?? '');
     _pincodeController = TextEditingController(text: widget.profile?.pincode ?? '');
     _priceController = TextEditingController(text: '42.37');
+    _totalSlotsController = TextEditingController(text: '10');
     
     if (widget.profile?.state.isNotEmpty == true && _states.contains(widget.profile?.state)) {
       _selectedState = widget.profile?.state;
@@ -100,6 +102,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 if ((double.tryParse(_priceController.text) ?? 0.0) < 42.37) {
                     _priceController.text = '42.37';
                 }
+                _totalSlotsController.text = _currentHotel!.totalRooms.toString();
             }
             if (_currentHotel?.amenities != null) {
                 final Map<int, String> idToName = {
@@ -134,6 +137,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _addressController.dispose();
     _pincodeController.dispose();
     _priceController.dispose();
+    _totalSlotsController.dispose();
     super.dispose();
   }
 
@@ -160,6 +164,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (enteredPrice < 42.37) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Price cannot be less than 42.37')),
+      );
+      return;
+    }
+
+    int totalSlots = int.tryParse(_totalSlotsController.text) ?? 10;
+    if (totalSlots < 1) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Total slots must be at least 1')),
       );
       return;
     }
@@ -202,6 +214,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           await _hotelService.updateHotel(_currentHotel!.id!, {
               'name': _hotelNameController.text,
               'price_per_night': enteredPrice,
+              'total_rooms': totalSlots,
               'amenities': selectedAmenities,
           });
 
@@ -260,6 +273,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     const SizedBox(height: 16),
                     
                     _buildTextField(_ownerNameController, 'Enter Owner Name'),
+                    const SizedBox(height: 16),
+                    
+                    _buildTextField(_totalSlotsController, 'Enter Total Parking Slots', keyboardType: TextInputType.number),
                     const SizedBox(height: 16),
                     
                     _buildTextField(_priceController, 'Enter Price per night (Min 42.37)', keyboardType: const TextInputType.numberWithOptions(decimal: true)),

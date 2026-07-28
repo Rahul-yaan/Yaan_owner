@@ -3,7 +3,7 @@ class ApiEndpoints {
   // For local Android emulator, usually http://10.0.2.2:8000/api
   // For local iOS simulator, usually http://127.0.0.1:8000/api
   // For a live server, use the https domain.
-  static const String baseUrl = 'http://192.168.1.74:8000/api';
+  static const String baseUrl = 'http://192.168.1.48:8000/api';
   
   // Auth endpoints
   static const String login = '/login';
