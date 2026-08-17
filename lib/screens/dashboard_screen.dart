@@ -190,7 +190,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
               ],
             ),
             const SizedBox(height: 8),
-            Text('Slot : ${booking.slot}', style: const TextStyle(fontSize: 12)),
+            Text('Slot : ${booking.displaySlot}', style: const TextStyle(fontSize: 12)),
             const SizedBox(height: 8),
             Text('Amount : ₹ ${booking.totalAmount}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
             const SizedBox(height: 12),

@@ -155,7 +155,7 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                 children: [
                   const Text('Booking Details', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                   const SizedBox(height: 16),
-                  _buildDetailRow('Slot', widget.booking.slot),
+                  _buildDetailRow('Slot', widget.booking.displaySlot),
                   const SizedBox(height: 12),
                   _buildDetailRow('Truck Type', widget.booking.truckType),
                   const SizedBox(height: 12),

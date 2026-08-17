@@ -1,3 +1,5 @@
+import '../utils/date_formatter.dart';
+
 class BookingModel {
   final int id;
   final int hotelId;
@@ -49,16 +51,16 @@ class BookingModel {
       status: json['status'] ?? 'pending',
       checkIn: json['check_in'] ?? '',
       checkOut: json['check_out'] ?? '',
-      totalAmount: double.tryParse(json['total_amount']?.toString() ?? '0') ?? 0.0,
+      totalAmount: double.tryParse((json['total_payable'] ?? json['total_amount'])?.toString() ?? '0') ?? 0.0,
       user: json['user'],
       hotel: json['hotel'],
-      slot: json['slot'] ?? json['booking_date'] ?? json['check_in'] ?? 'N/A', // Replaced hardcoded '17 April, 2024' with actual dates
+      slot: json['slot'] ?? json['booking_date'] ?? json['check_in'] ?? 'N/A',
       truckType: json['truck_type'] ?? '4 Wheel',
       truckNo: json['truck_no'] ?? 'GJ05HV5555',
       logisticsName: json['logistics_name'] ?? 'VRL Logistics',
       logisticsNumber: json['logistics_number'] ?? '98999 89999',
-      discount: double.tryParse(json['discount']?.toString() ?? '0') ?? 0.0,
-      gst: double.tryParse(json['gst']?.toString() ?? '0') ?? 0.0,
+      discount: double.tryParse((json['promotion_applied'] ?? json['discount'])?.toString() ?? '0') ?? 0.0,
+      gst: double.tryParse((json['gst_amount'] ?? json['gst'])?.toString() ?? '0') ?? 0.0,
       bookingDate: json['booking_date'] ?? '',
       createdAt: json['created_at'] ?? '',
       paymentStatus: json['payment_status'] ?? 'pending',
@@ -69,4 +71,7 @@ class BookingModel {
   String get userName => user?['name'] ?? 'Unknown';
   String get userPhone => user?['phone'] ?? '';
   String get hotelName => hotel?['name'] ?? '';
+
+  String get displaySlot => DateFormatter.formatSlotDate(slot, checkIn: checkIn, checkOut: checkOut);
 }
+

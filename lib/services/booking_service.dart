@@ -2,46 +2,13 @@ import 'package:dio/dio.dart';
 import '../core/api/api_client.dart';
 import '../core/api/api_endpoints.dart';
 import '../core/models/booking_model.dart';
+import '../core/utils/date_formatter.dart';
 
 class BookingService {
   final ApiClient _apiClient = ApiClient();
 
   DateTime? _parseDate(String dateString) {
-    if (dateString.isEmpty) return null;
-    
-    final parsed = DateTime.tryParse(dateString);
-    if (parsed != null) return parsed;
-
-    // Try parsing "17 April 2024" or "17 April, 2024"
-    final regex = RegExp(r'(\d{1,2})\s+([a-zA-Z]+)[,\s]+(\d{4})');
-    final match = regex.firstMatch(dateString);
-    if (match != null) {
-      final day = int.parse(match.group(1)!);
-      final monthStr = match.group(2)!.toLowerCase();
-      final year = int.parse(match.group(3)!);
-      
-      int month = 1;
-      const months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
-      for (int i = 0; i < months.length; i++) {
-        if (monthStr.startsWith(months[i])) {
-          month = i + 1;
-          break;
-        }
-      }
-      return DateTime(year, month, day);
-    }
-
-    // Try parsing "DD/MM/YYYY" or "DD-MM-YYYY"
-    final regex2 = RegExp(r'(\d{1,2})[/-](\d{1,2})[/-](\d{4})');
-    final match2 = regex2.firstMatch(dateString);
-    if (match2 != null) {
-      final day = int.parse(match2.group(1)!);
-      final month = int.parse(match2.group(2)!);
-      final year = int.parse(match2.group(3)!);
-      return DateTime(year, month, day);
-    }
-    
-    return null;
+    return DateFormatter.parseDate(dateString);
   }
 
   Future<List<BookingModel>> getBookings({String filter = 'all'}) async {
