@@ -1,4 +1,4 @@
-package com.example.yaan_owner
+package com.yaanvendor.truckparkingbooking
 
 import io.flutter.embedding.android.FlutterActivity
 
