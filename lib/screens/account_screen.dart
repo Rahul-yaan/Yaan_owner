@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import '../core/models/owner_profile_model.dart';
 import '../core/models/user_model.dart';
 import '../services/profile_service.dart';
@@ -60,6 +62,60 @@ class _AccountScreenState extends State<AccountScreen> {
     }
   }
 
+  Future<void> _openLegalPage(String endpoint, String title) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(
+        child: CircularProgressIndicator(color: Color(0xFFC0392B)),
+      ),
+    );
+
+    try {
+      final response = await http.get(
+        Uri.parse('https://yaan-backend.onrender.com/api$endpoint'),
+        headers: {
+          'Accept': 'application/json',
+          'X-App-Type': 'vendor',
+        },
+      ).timeout(const Duration(seconds: 12));
+
+      if (mounted) Navigator.of(context).pop(); // Dismiss loading
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final String contentText = data['content'] ?? data['description'] ?? 'No information available.';
+        final List sections = data['sections'] ?? [];
+
+        if (mounted) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => LegalDetailViewerScreen(
+                title: title,
+                content: contentText,
+                sections: sections,
+              ),
+            ),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to load page information.')),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.of(context).pop(); // Dismiss loading
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading data: $e')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -71,7 +127,7 @@ class _AccountScreenState extends State<AccountScreen> {
         title: const Text('Account', style: TextStyle(fontWeight: FontWeight.bold)),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator(color: Color(0xFFC0392B)))
           : SingleChildScrollView(
               padding: const EdgeInsets.all(16.0),
               child: Column(
@@ -88,23 +144,45 @@ class _AccountScreenState extends State<AccountScreen> {
                     ),
                     child: Column(
                       children: [
-                        _buildListTile(Icons.description, 'Terms & Conditions'),
+                        _buildListTile(Icons.description, 'Terms & Conditions', () {
+                          _openLegalPage('/vendor/terms-and-conditions', 'Terms & Conditions');
+                        }),
                         _buildDivider(),
-                        _buildListTile(Icons.info_outline, 'About Us'),
+                        _buildListTile(Icons.info_outline, 'About Us', () {
+                          _openLegalPage('/vendor/about', 'About Us');
+                        }),
                         _buildDivider(),
-                        _buildListTile(Icons.privacy_tip_outlined, 'Privacy Policy'),
+                        _buildListTile(Icons.privacy_tip_outlined, 'Privacy Policy', () {
+                          _openLegalPage('/vendor/privacy-policy', 'Privacy Policy');
+                        }),
                         _buildDivider(),
-                        _buildListTile(Icons.contact_support_outlined, 'Contact Us'),
+                        _buildListTile(Icons.contact_support_outlined, 'Contact Us', () {
+                          _openLegalPage('/vendor/contact', 'Contact Us');
+                        }),
                         _buildDivider(),
-                        _buildListTile(Icons.share_outlined, 'Share App'),
+                        _buildListTile(Icons.share_outlined, 'Share App', () {
+                          _openLegalPage('/vendor/share', 'Share App');
+                        }),
                         _buildDivider(),
-                        _buildListTile(Icons.image_outlined, 'Add Image'),
+                        _buildListTile(Icons.image_outlined, 'Add Image', () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Add Image feature selected.')),
+                          );
+                        }),
                         _buildDivider(),
-                        _buildListTile(Icons.photo_library_outlined, 'View Gallery'),
+                        _buildListTile(Icons.photo_library_outlined, 'View Gallery', () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('View Gallery feature selected.')),
+                          );
+                        }),
                         _buildDivider(),
-                        _buildListTile(Icons.star_outline, 'Rate Us'),
+                        _buildListTile(Icons.star_outline, 'Rate Us', () {
+                          _openLegalPage('/vendor/rate', 'Rate Us');
+                        }),
                         _buildDivider(),
-                        _buildListTile(Icons.help_outline, 'Faq'),
+                        _buildListTile(Icons.help_outline, 'Faq', () {
+                          _openLegalPage('/vendor/faq', 'Frequently Asked Questions');
+                        }),
                       ],
                     ),
                   ),
@@ -115,7 +193,7 @@ class _AccountScreenState extends State<AccountScreen> {
                     child: ElevatedButton(
                       onPressed: _logout,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF2B2B2B), // Dark button
+                        backgroundColor: const Color(0xFF2B2B2B),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -148,9 +226,15 @@ class _AccountScreenState extends State<AccountScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const CircleAvatar(
+          CircleAvatar(
             radius: 30,
-            backgroundImage: NetworkImage('https://via.placeholder.com/150'), // Placeholder
+            backgroundColor: const Color(0xFFC0392B).withOpacity(0.1),
+            child: Text(
+              _profile?.ownerName?.isNotEmpty == true
+                  ? _profile!.ownerName.substring(0, 1).toUpperCase()
+                  : (_user?.name?.isNotEmpty == true ? _user!.name.substring(0, 1).toUpperCase() : 'U'),
+              style: const TextStyle(color: Color(0xFFC0392B), fontWeight: FontWeight.bold, fontSize: 22),
+            ),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -187,7 +271,7 @@ class _AccountScreenState extends State<AccountScreen> {
                 ),
               );
               if (result == true) {
-                _fetchProfile(); // Refresh after edit
+                _fetchProfile();
               }
             },
           ),
@@ -196,16 +280,98 @@ class _AccountScreenState extends State<AccountScreen> {
     );
   }
 
-  Widget _buildListTile(IconData icon, String title) {
+  Widget _buildListTile(IconData icon, String title, VoidCallback onTap) {
     return ListTile(
       leading: Icon(icon, color: Colors.black87),
       title: Text(title, style: const TextStyle(fontSize: 14)),
       trailing: const Icon(Icons.chevron_right, color: Colors.grey),
-      onTap: () {},
+      onTap: onTap,
     );
   }
 
   Widget _buildDivider() {
     return Divider(height: 1, thickness: 1, color: Colors.grey.shade200, indent: 16, endIndent: 16);
+  }
+}
+
+class LegalDetailViewerScreen extends StatelessWidget {
+  final String title;
+  final String content;
+  final List sections;
+
+  const LegalDetailViewerScreen({
+    super.key,
+    required this.title,
+    required this.content,
+    required this.sections,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: const Color(0xFFC0392B),
+        foregroundColor: Colors.white,
+        elevation: 0,
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (sections.isNotEmpty)
+              ...sections.map((sec) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 20.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        sec['title'] ?? '',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF0F172A),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        sec['content'] ?? '',
+                        style: const TextStyle(fontSize: 14, height: 1.5, color: Color(0xFF334155)),
+                      ),
+                      if (sec['items'] != null && sec['items'] is List)
+                        ...List<Widget>.from(
+                          (sec['items'] as List).map(
+                            (item) => Padding(
+                              padding: const EdgeInsets.only(top: 4.0, left: 12.0),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('• ', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFC0392B))),
+                                  Expanded(
+                                    child: Text(
+                                      item.toString(),
+                                      style: const TextStyle(fontSize: 14, height: 1.4, color: Color(0xFF334155)),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                );
+              }).toList()
+            else
+              Text(
+                content,
+                style: const TextStyle(fontSize: 14, height: 1.5, color: Color(0xFF334155)),
+              ),
+          ],
+        ),
+      ),
+    );
   }
 }
