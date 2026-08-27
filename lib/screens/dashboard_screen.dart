@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../core/models/booking_model.dart';
 import '../services/booking_service.dart';
+import '../services/profile_service.dart';
+import 'hotel_setup_screen.dart';
 import 'booking_details_screen.dart';
 import 'insight_screen.dart';
 import 'account_screen.dart';
@@ -16,12 +18,33 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final BookingService _bookingService = BookingService();
+  final ProfileService _profileService = ProfileService();
   int _currentIndex = 0;
+
+  String? _kycStatus;
+  String? _rejectionReason;
+  String? _kycMessage;
+  String? _hotelStatus;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _fetchKycStatus();
+  }
+
+  Future<void> _fetchKycStatus() async {
+    try {
+      final res = await _profileService.getProfile();
+      if (mounted) {
+        setState(() {
+          _kycStatus = res['kyc_status'];
+          _rejectionReason = res['rejection_reason'];
+          _kycMessage = res['kyc_message'];
+          _hotelStatus = res['hotel_status'];
+        });
+      }
+    } catch (_) {}
   }
 
   @override
@@ -49,7 +72,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
       backgroundColor: const Color(0xFFF4F6F9),
       appBar: _currentIndex == 0
           ? PreferredSize(
-              preferredSize: const Size.fromHeight(115.0),
+              preferredSize: const Size.fromHeight(124.0),
               child: Container(
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
@@ -59,7 +82,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: primaryColor.withOpacity(0.25),
+                      color: primaryColor.withValues(alpha: 0.25),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -67,14 +90,15 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                 ),
                 child: SafeArea(
                   child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             const Text(
-                              'All Booking',
+                              'All Bookings',
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 22,
@@ -85,11 +109,11 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                             Row(
                               children: [
                                 IconButton(
-                                  icon: const Icon(Icons.notifications_none, color: Colors.white, size: 24),
+                                  icon: const Icon(Icons.notifications_none_rounded, color: Colors.white, size: 24),
                                   onPressed: () {},
                                 ),
                                 IconButton(
-                                  icon: const Icon(Icons.menu, color: Colors.white, size: 24),
+                                  icon: const Icon(Icons.menu_rounded, color: Colors.white, size: 24),
                                   onPressed: () {},
                                 ),
                               ],
@@ -97,35 +121,40 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                           ],
                         ),
                       ),
-                      Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 2.0),
-                        height: 38,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(20.0),
-                        ),
-                        child: TabBar(
-                          controller: _tabController,
-                          indicator: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(20.0),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
-                                blurRadius: 4,
-                                offset: const Offset(0, 2),
-                              ),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 8.0),
+                        child: Container(
+                          height: 42,
+                          padding: const EdgeInsets.all(4.0),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.16),
+                            borderRadius: BorderRadius.circular(24.0),
+                          ),
+                          child: TabBar(
+                            controller: _tabController,
+                            indicatorSize: TabBarIndicatorSize.tab,
+                            dividerColor: Colors.transparent,
+                            indicator: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(20.0),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.12),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            labelColor: primaryColor,
+                            unselectedLabelColor: Colors.white.withValues(alpha: 0.9),
+                            labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                            unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                            tabs: const [
+                              Tab(text: 'TODAY'),
+                              Tab(text: 'OLDER'),
+                              Tab(text: 'UPCOMING'),
                             ],
                           ),
-                          labelColor: primaryColor,
-                          unselectedLabelColor: Colors.white.withOpacity(0.9),
-                          labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                          unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-                          tabs: const [
-                            Tab(text: 'TODAY'),
-                            Tab(text: 'OLDER'),
-                            Tab(text: 'UPCOMING'),
-                          ],
                         ),
                       ),
                     ],
@@ -233,8 +262,138 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
               );
             },
           ),
-        );
+        ),
+      ],
+    ),
+  );
       },
+    );
+  }
+
+    Widget _buildKycNotificationCard() {
+    if (_kycStatus == null && _rejectionReason == null && _hotelStatus == null) {
+      return const SizedBox();
+    }
+
+    final isRejected = _kycStatus == 'rejected' ||
+        _hotelStatus == 'rejected' ||
+        (_rejectionReason != null && _rejectionReason!.trim().isNotEmpty);
+
+    final isPending = _kycStatus == 'pending_approval' ||
+        _kycStatus == 'pending' ||
+        _hotelStatus == 'pending';
+
+    final isApproved = (_kycStatus == 'approved' || _kycStatus == 'active') &&
+        (_hotelStatus == 'approved' || _hotelStatus == 'active');
+
+    if (isApproved) return const SizedBox();
+
+    final Color bgColor = isRejected
+        ? const Color(0xFFFEF2F2)
+        : (isPending ? const Color(0xFFFFFBEB) : const Color(0xFFF0FDF4));
+
+    final Color borderColor = isRejected
+        ? const Color(0xFFFCA5A5)
+        : (isPending ? const Color(0xFFFDE68A) : const Color(0xFF86EFAC));
+
+    final Color iconColor = isRejected
+        ? const Color(0xFFDC2626)
+        : (isPending ? const Color(0xFFD97706) : const Color(0xFF16A34A));
+
+    final String titleText = isRejected
+        ? 'Application Rejected by Admin'
+        : (isPending ? 'Approval Pending' : 'KYC Approved');
+
+    final String displayReason = (_rejectionReason != null && _rejectionReason!.trim().isNotEmpty)
+        ? _rejectionReason!
+        : (_kycMessage ?? 'Admin rejected your application.');
+
+    final String bodyMessage = isRejected
+        ? 'Your application was rejected due to: $displayReason'
+        : (_kycMessage ?? 'Please wait for approval by the admin.');
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(14, 12, 14, 2),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: borderColor, width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: iconColor.withOpacity(0.08),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            isRejected
+                ? Icons.error_outline_rounded
+                : (isPending ? Icons.hourglass_top_rounded : Icons.check_circle_outline_rounded),
+            color: iconColor,
+            size: 24,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  titleText,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: iconColor,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  bodyMessage,
+                  style: TextStyle(
+                    fontSize: 13,
+                    height: 1.4,
+                    color: isRejected
+                        ? const Color(0xFF991B1B)
+                        : (isPending ? const Color(0xFF92400E) : const Color(0xFF166534)),
+                    fontWeight: isRejected ? FontWeight.w600 : FontWeight.normal,
+                  ),
+                ),
+                if (isRejected) ...[
+                  const SizedBox(height: 8),
+                  InkWell(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const HotelSetupScreen()),
+                      );
+                    },
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Update & Resubmit Application',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: iconColor,
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Icon(Icons.arrow_forward_rounded, size: 14, color: iconColor),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 

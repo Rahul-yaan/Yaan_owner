@@ -28,6 +28,13 @@ class ProfileService {
       return {
         'profile': profile,
         'user': user,
+        'hotel': response.data['hotel'],
+        'kyc_status': response.data['kyc_status'],
+        'rejection_reason': response.data['rejection_reason'],
+        'kyc_message': response.data['kyc_message'] ?? response.data['message'],
+        'admin_message': response.data['admin_message'],
+        'notification': response.data['notification'],
+        'hotel_status': response.data['hotel_status'],
       };
     } on DioException catch (e) {
       throw Exception(_handleError(e));

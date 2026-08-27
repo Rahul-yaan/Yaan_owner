@@ -20,6 +20,10 @@ class _AccountScreenState extends State<AccountScreen> {
   
   OwnerProfileModel? _profile;
   UserModel? _user;
+  String? _kycStatus;
+  String? _rejectionReason;
+  String? _kycMessage;
+  String? _hotelStatus;
   bool _isLoading = true;
 
   @override
@@ -35,6 +39,10 @@ class _AccountScreenState extends State<AccountScreen> {
         setState(() {
           _profile = data['profile'];
           _user = data['user'];
+          _kycStatus = data['kyc_status'];
+          _rejectionReason = data['rejection_reason'];
+          _kycMessage = data['kyc_message'];
+          _hotelStatus = data['hotel_status'];
           _isLoading = false;
         });
       }
@@ -133,6 +141,7 @@ class _AccountScreenState extends State<AccountScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  _buildKycNotificationCard(),
                   _buildProfileCard(),
                   const SizedBox(height: 24),
                   const Text('Other Information', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
@@ -205,6 +214,106 @@ class _AccountScreenState extends State<AccountScreen> {
                 ],
               ),
             ),
+    );
+  }
+
+    Widget _buildKycNotificationCard() {
+    if (_kycStatus == null && _rejectionReason == null && _hotelStatus == null) {
+      return const SizedBox();
+    }
+
+    final isRejected = _kycStatus == 'rejected' ||
+        _hotelStatus == 'rejected' ||
+        (_rejectionReason != null && _rejectionReason!.trim().isNotEmpty);
+
+    final isPending = _kycStatus == 'pending_approval' ||
+        _kycStatus == 'pending' ||
+        _hotelStatus == 'pending';
+
+    final isApproved = (_kycStatus == 'approved' || _kycStatus == 'active') &&
+        (_hotelStatus == 'approved' || _hotelStatus == 'active');
+
+    if (isApproved) return const SizedBox();
+
+    final Color bgColor = isRejected
+        ? const Color(0xFFFEF2F2)
+        : (isPending ? const Color(0xFFFFFBEB) : const Color(0xFFF0FDF4));
+
+    final Color borderColor = isRejected
+        ? const Color(0xFFFCA5A5)
+        : (isPending ? const Color(0xFFFDE68A) : const Color(0xFF86EFAC));
+
+    final Color iconColor = isRejected
+        ? const Color(0xFFDC2626)
+        : (isPending ? const Color(0xFFD97706) : const Color(0xFF16A34A));
+
+    final String titleText = isRejected
+        ? 'Application Rejected by Admin'
+        : (isPending ? 'Approval Pending' : 'KYC Approved');
+
+    final String displayReason = (_rejectionReason != null && _rejectionReason!.trim().isNotEmpty)
+        ? _rejectionReason!
+        : (_kycMessage ?? 'Admin rejected your application.');
+
+    final String bodyMessage = isRejected
+        ? 'Your application was rejected due to: $displayReason'
+        : (_kycMessage ?? 'Please wait for approval by the admin.');
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: borderColor, width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: iconColor.withOpacity(0.08),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            isRejected
+                ? Icons.error_outline_rounded
+                : (isPending ? Icons.hourglass_top_rounded : Icons.check_circle_outline_rounded),
+            color: iconColor,
+            size: 24,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  titleText,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: iconColor,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  bodyMessage,
+                  style: TextStyle(
+                    fontSize: 13,
+                    height: 1.4,
+                    color: isRejected
+                        ? const Color(0xFF991B1B)
+                        : (isPending ? const Color(0xFF92400E) : const Color(0xFF166534)),
+                    fontWeight: isRejected ? FontWeight.w600 : FontWeight.normal,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 

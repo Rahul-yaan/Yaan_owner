@@ -29,6 +29,9 @@ class _HotelSetupScreenState extends State<HotelSetupScreen> {
   final ProfileService _profileService = ProfileService();
   
   String _ownerPhone = 'Loading...';
+  String? _kycStatus;
+  String? _rejectionReason;
+  String? _kycMessage;
   
   final ImagePicker _picker = ImagePicker();
   final Map<String, String> _uploadedImages = {};
@@ -69,10 +72,13 @@ class _HotelSetupScreenState extends State<HotelSetupScreen> {
 
   Future<void> _loadProfile() async {
     final res = await ApiService.getProfile();
-    if (res != null && res['user'] != null) {
+    if (res != null) {
       if (mounted) {
         setState(() {
-          _ownerPhone = res['user']['phone'] ?? 'N/A';
+          _ownerPhone = res['user']?['phone'] ?? 'N/A';
+          _kycStatus = res['kyc_status'];
+          _rejectionReason = res['rejection_reason'];
+          _kycMessage = res['kyc_message'] ?? res['message'];
         });
       }
     } else {

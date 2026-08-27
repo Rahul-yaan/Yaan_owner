@@ -269,14 +269,20 @@ class _LoginScreenState extends State<LoginScreen> {
                     ],
                   ),
                   const SizedBox(height: 18),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  Wrap(
+                    alignment: WrapAlignment.center,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       const Text(
                         "Don't have an owner account?",
-                        style: TextStyle(color: Color(0xFF64748B)),
+                        style: TextStyle(color: Color(0xFF64748B), fontSize: 13.5),
                       ),
                       TextButton(
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 0),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
                         onPressed: () => Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
@@ -288,6 +294,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           style: TextStyle(
                             color: Color(0xFFC0392B),
                             fontWeight: FontWeight.bold,
+                            fontSize: 13.5,
                           ),
                         ),
                       ),
