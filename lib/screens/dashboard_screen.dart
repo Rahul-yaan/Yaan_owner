@@ -219,53 +219,57 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
             setState(() {});
             await Future.delayed(const Duration(seconds: 1));
           },
-          child: FutureBuilder<List<BookingModel>>(
-            future: _bookingService.getBookings(filter: filter),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator(color: Color(0xFFC0392B)));
-              } else if (snapshot.hasError) {
-                return Center(child: Text('Error: ${snapshot.error}', style: const TextStyle(color: Colors.red)));
-              } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                return ListView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  children: [
-                    SizedBox(
-                      height: MediaQuery.of(context).size.height * 0.5,
-                      child: Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.inbox_outlined, size: 56, color: Colors.grey.shade400),
-                            const SizedBox(height: 12),
-                            Text(
-                              'No bookings found. Pull down to refresh.',
-                              style: TextStyle(fontSize: 14, color: Colors.grey.shade600, fontWeight: FontWeight.w500),
+          child: Column(
+            children: [
+              _buildKycNotificationCard(),
+              Expanded(
+                child: FutureBuilder<List<BookingModel>>(
+                  future: _bookingService.getBookings(filter: filter),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator(color: Color(0xFFC0392B)));
+                    } else if (snapshot.hasError) {
+                      return Center(child: Text('Error: ${snapshot.error}', style: const TextStyle(color: Colors.red)));
+                    } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                      return ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        children: [
+                          SizedBox(
+                            height: MediaQuery.of(context).size.height * 0.5,
+                            child: Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.inbox_outlined, size: 56, color: Colors.grey.shade400),
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    'No bookings found. Pull down to refresh.',
+                                    style: TextStyle(fontSize: 14, color: Colors.grey.shade600, fontWeight: FontWeight.w500),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                );
-              }
+                          ),
+                        ],
+                      );
+                    }
 
-              final bookings = snapshot.data!;
-              return ListView.builder(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.all(14),
-                itemCount: bookings.length,
-                itemBuilder: (context, index) {
-                  final booking = bookings[index];
-                  return _buildBookingCard(booking, filter);
-                },
-              );
-            },
+                    final bookings = snapshot.data!;
+                    return ListView.builder(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.all(14),
+                      itemCount: bookings.length,
+                      itemBuilder: (context, index) {
+                        final booking = bookings[index];
+                        return _buildBookingCard(booking, filter);
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
           ),
-        ),
-      ],
-    ),
-  );
+        );
       },
     );
   }
