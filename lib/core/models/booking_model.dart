@@ -8,6 +8,8 @@ class BookingModel {
   final String checkIn;
   final String checkOut;
   final double totalAmount;
+  final double totalPayable;
+  final double pricePerNight;
   final Map<String, dynamic>? user;
   final Map<String, dynamic>? hotel;
   final String slot;
@@ -29,6 +31,8 @@ class BookingModel {
     required this.checkIn,
     required this.checkOut,
     required this.totalAmount,
+    required this.totalPayable,
+    required this.pricePerNight,
     this.user,
     this.hotel,
     this.slot = '',
@@ -44,6 +48,17 @@ class BookingModel {
   });
 
   factory BookingModel.fromJson(Map<String, dynamic> json) {
+    double pricePN = double.tryParse((json['price_per_night'] ?? json['hotel']?['price_per_night'])?.toString() ?? '0') ?? 0.0;
+    double baseAmt = double.tryParse(json['total_amount']?.toString() ?? '0') ?? (pricePN > 0 ? pricePN : 0.0);
+    double discAmt = double.tryParse((json['promotion_applied'] ?? json['discount_amount'] ?? json['discount'])?.toString() ?? '0') ?? 0.0;
+    double discountedBase = (baseAmt - discAmt) > 0 ? (baseAmt - discAmt) : 0.0;
+    double calculatedGst = double.tryParse((json['gst_amount'] ?? json['gst'])?.toString() ?? '0') ?? (discountedBase * 0.18);
+    double calculatedPayable = double.tryParse(json['total_payable']?.toString() ?? '0') ?? (discountedBase + calculatedGst);
+
+    if (calculatedPayable == 0 && baseAmt > 0) {
+      calculatedPayable = baseAmt + calculatedGst;
+    }
+
     return BookingModel(
       id: json['id'] ?? 0,
       hotelId: json['hotel_id'] ?? 0,
@@ -51,16 +66,18 @@ class BookingModel {
       status: json['status'] ?? 'pending',
       checkIn: json['check_in'] ?? '',
       checkOut: json['check_out'] ?? '',
-      totalAmount: double.tryParse((json['total_payable'] ?? json['total_amount'])?.toString() ?? '0') ?? 0.0,
+      totalAmount: baseAmt,
+      totalPayable: calculatedPayable,
+      pricePerNight: pricePN,
       user: json['user'],
       hotel: json['hotel'],
       slot: json['slot'] ?? json['booking_date'] ?? json['check_in'] ?? 'N/A',
       truckType: json['truck_type'] ?? '4 Wheel',
-      truckNo: json['truck_no'] ?? 'GJ05HV5555',
-      logisticsName: json['logistics_name'] ?? 'VRL Logistics',
-      logisticsNumber: json['logistics_number'] ?? '98999 89999',
-      discount: double.tryParse((json['promotion_applied'] ?? json['discount'])?.toString() ?? '0') ?? 0.0,
-      gst: double.tryParse((json['gst_amount'] ?? json['gst'])?.toString() ?? '0') ?? 0.0,
+      truckNo: json['truck_no'] ?? 'N/A',
+      logisticsName: json['logistics_name'] ?? 'N/A',
+      logisticsNumber: json['logistics_number'] ?? 'N/A',
+      discount: discAmt,
+      gst: calculatedGst,
       bookingDate: json['booking_date'] ?? '',
       createdAt: json['created_at'] ?? '',
       paymentStatus: json['payment_status'] ?? 'pending',
@@ -74,4 +91,3 @@ class BookingModel {
 
   String get displaySlot => DateFormatter.formatSlotDate(slot, checkIn: checkIn, checkOut: checkOut);
 }
-

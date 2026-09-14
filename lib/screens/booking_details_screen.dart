@@ -32,16 +32,20 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    double baseAmount = 42.37;
-    if (widget.booking.hotel != null && widget.booking.hotel!['price_per_night'] != null) {
-      baseAmount = double.tryParse(widget.booking.hotel!['price_per_night'].toString()) ?? 42.37;
-    } else if (widget.booking.totalAmount > 0) {
-      // If hotel price is unavailable but totalAmount is provided, assume it's the base amount.
-      baseAmount = widget.booking.totalAmount;
-    }
+    double baseAmount = widget.booking.totalAmount > 0 
+        ? widget.booking.totalAmount 
+        : (widget.booking.pricePerNight > 0 
+            ? widget.booking.pricePerNight 
+            : (widget.booking.hotel != null && widget.booking.hotel!['price_per_night'] != null 
+                ? (double.tryParse(widget.booking.hotel!['price_per_night'].toString()) ?? 0.0) 
+                : 0.0));
 
-    double gstAmount = baseAmount * 0.18;
-    double payableAmount = baseAmount + gstAmount - widget.booking.discount;
+    double discountAmount = widget.booking.discount;
+    double discountedBase = (baseAmount - discountAmount) > 0 ? (baseAmount - discountAmount) : 0.0;
+    double gstAmount = widget.booking.gst > 0 ? widget.booking.gst : (discountedBase * 0.18);
+    double payableAmount = widget.booking.totalPayable > 0 
+        ? widget.booking.totalPayable 
+        : (discountedBase + gstAmount);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),

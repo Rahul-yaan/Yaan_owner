@@ -555,7 +555,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                     style: TextStyle(fontSize: 12, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
                   ),
                   Text(
-                    '\u{20B9} ${booking.totalAmount}',
+                    '\u{20B9} ${(booking.totalPayable > 0 ? booking.totalPayable : booking.totalAmount).toStringAsFixed(2)}',
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w800,

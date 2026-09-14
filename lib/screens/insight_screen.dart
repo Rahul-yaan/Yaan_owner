@@ -228,15 +228,16 @@ class _InsightScreenState extends State<InsightScreen> {
     double sumGstAmount = 0.0;
 
     for (var b in bookings) {
-      double basePrice = 42.37;
-      if (b.hotel != null && b.hotel!['price_per_night'] != null) {
-        basePrice = double.tryParse(b.hotel!['price_per_night'].toString()) ?? 42.37;
-      } else if (b.totalAmount > 0) {
-        basePrice = b.totalAmount;
-      }
+      double basePrice = b.totalAmount > 0 
+          ? b.totalAmount 
+          : (b.pricePerNight > 0 
+              ? b.pricePerNight 
+              : (b.hotel != null && b.hotel!['price_per_night'] != null 
+                  ? (double.tryParse(b.hotel!['price_per_night'].toString()) ?? 0.0) 
+                  : 0.0));
 
       // Calculate the derived values for this booking
-      double customerTotal = basePrice * 1.18; // Base + 18% GST
+      double customerTotal = b.totalPayable > 0 ? b.totalPayable : (basePrice * 1.18);
       double platformFee = basePrice * 0.34;   // 34% deduction
       double ownerPayable = basePrice - platformFee; // Remaining base for owner
       double ownerGst = ownerPayable * 0.18;   // 18% GST on owner's share
