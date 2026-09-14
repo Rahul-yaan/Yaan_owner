@@ -234,12 +234,18 @@ class _InsightScreenState extends State<InsightScreen> {
               ? b.pricePerNight 
               : (b.totalPayable > 0 ? (b.totalPayable / 1.18) : 0.0));
 
-      double customerTotal = b.totalPayable > 0 ? b.totalPayable : (basePrice * 1.18);
+      if (basePrice > 100 && b.totalPayable > 0 && b.totalPayable <= basePrice * 1.25) {
+        basePrice = b.totalPayable / 1.18;
+      }
+
+      double customerTotal = (basePrice * 1.18 * 100).roundToDouble() / 100.0;
+      if (b.totalPayable > 0) customerTotal = b.totalPayable;
+
       double ownerBaseShare = basePrice * 0.66;
-      double ownerGst = ownerBaseShare * 0.18;
-      double ownerTotalPayout = ownerBaseShare + ownerGst;
-      double platformFeeCollection = customerTotal - ownerTotalPayout;
-      double totalGst = b.gst > 0 ? b.gst : (basePrice * 0.18);
+      double ownerGst = (ownerBaseShare * 0.18 * 100).roundToDouble() / 100.0;
+      double ownerTotalPayout = ((ownerBaseShare + ownerGst) * 100).roundToDouble() / 100.0;
+      double platformFeeCollection = ((customerTotal - ownerTotalPayout) * 100).roundToDouble() / 100.0;
+      double totalGst = ((basePrice * 0.18) * 100).roundToDouble() / 100.0;
 
       sumTotalAmount += customerTotal;
       sumPlatformFee += platformFeeCollection;

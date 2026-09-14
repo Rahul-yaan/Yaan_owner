@@ -36,16 +36,20 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
         ? widget.booking.totalAmount 
         : (widget.booking.pricePerNight > 0 
             ? widget.booking.pricePerNight 
-            : (widget.booking.hotel != null && widget.booking.hotel!['price_per_night'] != null 
-                ? (double.tryParse(widget.booking.hotel!['price_per_night'].toString()) ?? 0.0) 
-                : 0.0));
+            : (widget.booking.totalPayable > 0 ? (widget.booking.totalPayable / 1.18) : 0.0));
+
+    if (baseAmount > 100 && widget.booking.totalPayable > 0 && widget.booking.totalPayable <= baseAmount * 1.25) {
+      baseAmount = widget.booking.totalPayable / 1.18;
+    }
 
     double discountAmount = widget.booking.discount;
     double discountedBase = (baseAmount - discountAmount) > 0 ? (baseAmount - discountAmount) : 0.0;
-    double gstAmount = widget.booking.gst > 0 ? widget.booking.gst : (discountedBase * 0.18);
-    double payableAmount = widget.booking.totalPayable > 0 
-        ? widget.booking.totalPayable 
-        : (discountedBase + gstAmount);
+
+    // Standardized 18% GST calculation (e.g. 18% of 60.00 = 10.80)
+    double gstAmount = (discountedBase * 0.18 * 100).roundToDouble() / 100.0;
+    // Total Payable (e.g. 60.00 + 10.80 = 70.80)
+    double payableAmount = (discountedBase + gstAmount * 100).roundToDouble() / 100.0;
+    payableAmount = ((discountedBase + gstAmount) * 100).roundToDouble() / 100.0;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
