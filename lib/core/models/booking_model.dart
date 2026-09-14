@@ -49,15 +49,27 @@ class BookingModel {
 
   factory BookingModel.fromJson(Map<String, dynamic> json) {
     double pricePN = double.tryParse((json['price_per_night'] ?? json['hotel']?['price_per_night'])?.toString() ?? '0') ?? 0.0;
-    double baseAmt = double.tryParse(json['total_amount']?.toString() ?? '0') ?? (pricePN > 0 ? pricePN : 0.0);
+    double rawTotalAmount = double.tryParse(json['total_amount']?.toString() ?? '0') ?? 0.0;
+    double rawTotalPayable = double.tryParse(json['total_payable']?.toString() ?? '0') ?? 0.0;
     double discAmt = double.tryParse((json['promotion_applied'] ?? json['discount_amount'] ?? json['discount'])?.toString() ?? '0') ?? 0.0;
+
+    double baseAmt = pricePN > 0 
+        ? pricePN 
+        : ((rawTotalAmount > 0 && (rawTotalPayable <= 0 || rawTotalAmount < rawTotalPayable)) 
+            ? rawTotalAmount 
+            : (rawTotalPayable > 0 ? (rawTotalPayable / 1.18) : rawTotalAmount));
+
+    if (baseAmt <= 0 && rawTotalAmount > 0) {
+      baseAmt = rawTotalAmount;
+    }
+
     double discountedBase = (baseAmt - discAmt) > 0 ? (baseAmt - discAmt) : 0.0;
     double calculatedGst = double.tryParse((json['gst_amount'] ?? json['gst'])?.toString() ?? '0') ?? (discountedBase * 0.18);
-    double calculatedPayable = double.tryParse(json['total_payable']?.toString() ?? '0') ?? (discountedBase + calculatedGst);
-
-    if (calculatedPayable == 0 && baseAmt > 0) {
-      calculatedPayable = baseAmt + calculatedGst;
+    if (calculatedGst <= 0 && discountedBase > 0) {
+      calculatedGst = discountedBase * 0.18;
     }
+
+    double calculatedPayable = rawTotalPayable > 0 ? rawTotalPayable : (discountedBase + calculatedGst);
 
     return BookingModel(
       id: json['id'] ?? 0,
@@ -68,7 +80,7 @@ class BookingModel {
       checkOut: json['check_out'] ?? '',
       totalAmount: baseAmt,
       totalPayable: calculatedPayable,
-      pricePerNight: pricePN,
+      pricePerNight: pricePN > 0 ? pricePN : baseAmt,
       user: json['user'],
       hotel: json['hotel'],
       slot: json['slot'] ?? json['booking_date'] ?? json['check_in'] ?? 'N/A',

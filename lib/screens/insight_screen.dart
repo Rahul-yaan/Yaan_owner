@@ -232,21 +232,19 @@ class _InsightScreenState extends State<InsightScreen> {
           ? b.totalAmount 
           : (b.pricePerNight > 0 
               ? b.pricePerNight 
-              : (b.hotel != null && b.hotel!['price_per_night'] != null 
-                  ? (double.tryParse(b.hotel!['price_per_night'].toString()) ?? 0.0) 
-                  : 0.0));
+              : (b.totalPayable > 0 ? (b.totalPayable / 1.18) : 0.0));
 
-      // Calculate the derived values for this booking
       double customerTotal = b.totalPayable > 0 ? b.totalPayable : (basePrice * 1.18);
-      double platformFee = basePrice * 0.34;   // 34% deduction
-      double ownerPayable = basePrice - platformFee; // Remaining base for owner
-      double ownerGst = ownerPayable * 0.18;   // 18% GST on owner's share
-      
-      // Sum it up
+      double ownerBaseShare = basePrice * 0.66;
+      double ownerGst = ownerBaseShare * 0.18;
+      double ownerTotalPayout = ownerBaseShare + ownerGst;
+      double platformFeeCollection = customerTotal - ownerTotalPayout;
+      double totalGst = b.gst > 0 ? b.gst : (basePrice * 0.18);
+
       sumTotalAmount += customerTotal;
-      sumPlatformFee += platformFee;
-      sumPayableAmount += ownerPayable;
-      sumGstAmount += ownerGst;
+      sumPlatformFee += platformFeeCollection;
+      sumPayableAmount += ownerTotalPayout;
+      sumGstAmount += totalGst;
     }
 
     return GridView.count(
