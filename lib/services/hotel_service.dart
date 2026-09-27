@@ -6,6 +6,21 @@ import '../core/models/hotel_model.dart';
 class HotelService {
   final ApiClient _apiClient = ApiClient();
 
+  Future<Map<String, dynamic>> getHotelQrCode({int? hotelId}) async {
+    try {
+      final url = hotelId != null
+          ? '${ApiEndpoints.baseUrl}/owner/hotels/$hotelId/qr-code'
+          : '${ApiEndpoints.baseUrl}/owner/qr-code';
+      final response = await _apiClient.dio.get(url);
+      if (response.statusCode == 200 && response.data is Map<String, dynamic>) {
+        return response.data;
+      }
+      throw Exception('Failed to load hotel QR code');
+    } on DioException catch (e) {
+      throw Exception(_handleError(e));
+    }
+  }
+
   Future<List<HotelModel>> getHotels() async {
     try {
       final response = await _apiClient.dio.get(ApiEndpoints.hotels);

@@ -11,4 +11,6 @@ class ApiEndpoints {
   
   // Hotel endpoints
   static const String hotels = '/owner/hotels';
+  static const String hotelQrCode = '/owner/qr-code';
+  static const String ownerBookings = '/owner/bookings';
 }

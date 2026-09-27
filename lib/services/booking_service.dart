@@ -7,6 +7,18 @@ import '../core/utils/date_formatter.dart';
 class BookingService {
   final ApiClient _apiClient = ApiClient();
 
+  Future<bool> updateBookingStatus(int id, String status) async {
+    try {
+      final response = await _apiClient.dio.put(
+        '${ApiEndpoints.baseUrl}/owner/bookings/$id/status',
+        data: {'status': status},
+      );
+      return response.statusCode == 200;
+    } on DioException catch (e) {
+      throw Exception(_handleError(e));
+    }
+  }
+
   DateTime? _parseDate(String dateString) {
     return DateFormatter.parseDate(dateString);
   }
