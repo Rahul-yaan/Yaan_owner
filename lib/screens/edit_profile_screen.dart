@@ -6,6 +6,7 @@ import '../core/models/user_model.dart';
 import '../services/profile_service.dart';
 import '../core/models/hotel_model.dart';
 import '../services/hotel_service.dart';
+import '../core/utils/india_locations.dart';
 
 class EditProfileScreen extends StatefulWidget {
   final OwnerProfileModel? profile;
@@ -64,8 +65,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   
   bool _isLoading = false;
 
-  final List<String> _states = ['Gujarat', 'Maharashtra', 'Delhi'];
-  final List<String> _cities = ['Ahmedabad', 'Surat', 'Mumbai', 'New Delhi'];
+  final List<String> _states = IndiaLocationData.states;
+  List<String> get _cities => (_selectedState != null && _selectedState!.isNotEmpty)
+      ? IndiaLocationData.getCities(state: _selectedState)
+      : IndiaLocationData.allCities;
 
   @override
   void initState() {
@@ -79,10 +82,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _priceController = TextEditingController(text: '42.37');
     _totalSlotsController = TextEditingController(text: '10');
     
-    if (widget.profile?.state.isNotEmpty == true && _states.contains(widget.profile?.state)) {
+    if (widget.profile?.state.isNotEmpty == true) {
       _selectedState = widget.profile?.state;
     }
-    if (widget.profile?.city.isNotEmpty == true && _cities.contains(widget.profile?.city)) {
+    if (widget.profile?.city.isNotEmpty == true) {
       _selectedCity = widget.profile?.city;
     }
     _fetchHotelData();
@@ -288,7 +291,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     _buildAddressField(),
                     const SizedBox(height: 16),
                     
-                    _buildDropdown('State', _states, _selectedState, (val) => setState(() => _selectedState = val)),
+                    _buildDropdown('State', _states, _selectedState, (val) => setState(() {
+                      _selectedState = val;
+                      if (_selectedCity != null && !IndiaLocationData.getCities(state: val).contains(_selectedCity)) {
+                        _selectedCity = null;
+                      }
+                    })),
                     const SizedBox(height: 16),
                     
                     _buildDropdown('City', _cities, _selectedCity, (val) => setState(() => _selectedCity = val)),

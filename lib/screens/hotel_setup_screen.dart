@@ -5,6 +5,7 @@ import '../services/hotel_service.dart';
 import '../services/api_service.dart';
 import '../services/profile_service.dart';
 import '../core/models/hotel_model.dart';
+import '../core/utils/india_locations.dart';
 import 'address_map_screen.dart';
 import 'dashboard_screen.dart';
 
@@ -23,6 +24,7 @@ class _HotelSetupScreenState extends State<HotelSetupScreen> {
   
   String? _selectedState;
   String? _selectedCity;
+  String? _selectedRoad;
   
   bool _isSubmitting = false;
   final HotelService _hotelService = HotelService();
@@ -125,23 +127,9 @@ class _HotelSetupScreenState extends State<HotelSetupScreen> {
     'Swimming Pool': false,
   };
 
-  final List<String> _statesList = ['Gujarat', 'Maharashtra', 'Delhi', 'Karnataka'];
-  
-  final Map<String, List<String>> _stateCities = {
-    'Gujarat': ['Ahmedabad', 'Surat', 'Vadodara', 'Rajkot'],
-    'Maharashtra': ['Mumbai', 'Pune', 'Nagpur', 'Nashik'],
-    'Delhi': ['New Delhi', 'North Delhi', 'South Delhi'],
-    'Karnataka': ['Bangalore', 'Mysore', 'Hubli'],
-  };
-
-  final Map<String, List<String>> _cityRoads = {
-    'Ahmedabad': ['CG Road', 'SG Highway', 'Ashram Road', 'SP Ring Road'],
-    'Surat': ['Ring Road', 'Dumas Road', 'VIP Road'],
-    'Mumbai': ['Marine Drive', 'Linking Road', 'SV Road', 'WEH'],
-    'Pune': ['FC Road', 'JM Road', 'MG Road', 'Baner Road'],
-    'New Delhi': ['Rajpath', 'Janpath', 'Ring Road'],
-    'Bangalore': ['MG Road', 'Brigade Road', 'Outer Ring Road'],
-  };
+  final List<String> _statesList = IndiaLocationData.states;
+  final Map<String, List<String>> _stateCities = IndiaLocationData.stateCities;
+  final Map<String, List<String>> _cityRoads = IndiaLocationData.cityRoads;
 
   Widget _buildTextField(String hintText, {bool enabled = true, String? suffixText, VoidCallback? onSuffixTap, TextEditingController? controller, TextInputType? keyboardType}) {
     return Padding(
@@ -189,7 +177,14 @@ class _HotelSetupScreenState extends State<HotelSetupScreen> {
     );
   }
 
-  Widget _buildAutocomplete(String hintText, List<String> options, {Function(String)? onSelectedValue, Key? key}) {
+  Widget _buildAutocomplete(
+    String hintText, 
+    List<String> options, {
+    Function(String)? onSelectedValue, 
+    Function(String)? onChangedValue,
+    String? initialText,
+    Key? key,
+  }) {
     return Padding(
       key: key,
       padding: const EdgeInsets.only(bottom: 16.0),
@@ -200,13 +195,15 @@ class _HotelSetupScreenState extends State<HotelSetupScreen> {
           color: Colors.white,
         ),
         child: Autocomplete<String>(
+          initialValue: initialText != null && initialText.isNotEmpty ? TextEditingValue(text: initialText) : null,
           optionsBuilder: (TextEditingValue textEditingValue) {
-            if (textEditingValue.text.isEmpty) {
-              return options;
+            final query = textEditingValue.text.trim().toLowerCase();
+            if (query.isEmpty) {
+              return options.take(50);
             }
-            return options.where((String option) {
-              return option.toLowerCase().contains(textEditingValue.text.toLowerCase());
-            });
+            final startsWith = options.where((String opt) => opt.toLowerCase().startsWith(query)).toList();
+            final contains = options.where((String opt) => !opt.toLowerCase().startsWith(query) && opt.toLowerCase().contains(query)).toList();
+            return [...startsWith, ...contains];
           },
           onSelected: (String selection) {
             if (onSelectedValue != null) {
@@ -218,6 +215,11 @@ class _HotelSetupScreenState extends State<HotelSetupScreen> {
             return TextField(
               controller: textEditingController,
               focusNode: focusNode,
+              onChanged: (val) {
+                if (onChangedValue != null) {
+                  onChangedValue(val);
+                }
+              },
               decoration: InputDecoration(
                 hintText: hintText,
                 hintStyle: const TextStyle(color: Colors.black54, fontSize: 14),
@@ -231,18 +233,27 @@ class _HotelSetupScreenState extends State<HotelSetupScreen> {
             return Align(
               alignment: Alignment.topLeft,
               child: Material(
-                elevation: 4.0,
+                elevation: 6.0,
+                color: Colors.white,
+                shadowColor: Colors.black26,
                 borderRadius: BorderRadius.circular(8),
-                child: SizedBox(
-                  height: 200.0,
-                  width: MediaQuery.of(context).size.width - 48,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxHeight: 240.0,
+                    maxWidth: MediaQuery.of(context).size.width - 48,
+                  ),
                   child: ListView.builder(
-                    padding: EdgeInsets.zero,
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    shrinkWrap: true,
                     itemCount: options.length,
                     itemBuilder: (BuildContext context, int index) {
                       final String option = options.elementAt(index);
                       return ListTile(
-                        title: Text(option, style: const TextStyle(fontSize: 14)),
+                        dense: true,
+                        title: Text(
+                          option, 
+                          style: const TextStyle(fontSize: 14, color: Colors.black87),
+                        ),
                         onTap: () {
                           onSelected(option);
                         },
@@ -598,26 +609,61 @@ class _HotelSetupScreenState extends State<HotelSetupScreen> {
                 }
               ),
               
-              _buildAutocomplete('State', _statesList, onSelectedValue: (val) {
-                setState(() {
-                  _selectedState = val;
-                  _selectedCity = null; // Reset city when state changes
-                });
-              }),
+              _buildAutocomplete(
+                'State', 
+                _statesList,
+                initialText: _selectedState,
+                key: ValueKey('state_$_selectedState'),
+                onSelectedValue: (val) {
+                  setState(() {
+                    _selectedState = val;
+                    if (_selectedCity != null && 
+                        !IndiaLocationData.getCities(state: val).map((c) => c.toLowerCase()).contains(_selectedCity!.toLowerCase())) {
+                      _selectedCity = null;
+                    }
+                  });
+                },
+                onChangedValue: (val) {
+                  _selectedState = val.trim();
+                },
+              ),
               _buildAutocomplete(
                 'City', 
-                _selectedState != null ? (_stateCities[_selectedState] ?? []) : [],
-                key: ValueKey('city_$_selectedState'), // Rebuilds widget when state changes
+                (_selectedState != null && _selectedState!.isNotEmpty)
+                    ? (_stateCities[_selectedState] ?? IndiaLocationData.getCities(state: _selectedState))
+                    : IndiaLocationData.allCities,
+                initialText: _selectedCity,
+                key: ValueKey('city_${_selectedState}_$_selectedCity'),
                 onSelectedValue: (val) {
                   setState(() {
                     _selectedCity = val;
+                    if (_selectedState == null || _selectedState!.isEmpty) {
+                      final inferredState = IndiaLocationData.getStateForCity(val);
+                      if (inferredState != null) {
+                        _selectedState = inferredState;
+                      }
+                    }
                   });
-                }
+                },
+                onChangedValue: (val) {
+                  _selectedCity = val.trim();
+                },
               ),
               _buildAutocomplete(
                 'Select Road', 
-                _selectedCity != null ? (_cityRoads[_selectedCity] ?? []) : [],
-                key: ValueKey('road_$_selectedCity'), // Rebuilds widget when city changes
+                (_selectedCity != null && _cityRoads.containsKey(_selectedCity))
+                    ? [..._cityRoads[_selectedCity]!, ...IndiaLocationData.majorHighwaysAndRoads]
+                    : IndiaLocationData.getRoads(city: _selectedCity),
+                initialText: _selectedRoad,
+                key: ValueKey('road_${_selectedCity}_$_selectedRoad'),
+                onSelectedValue: (val) {
+                  setState(() {
+                    _selectedRoad = val;
+                  });
+                },
+                onChangedValue: (val) {
+                  _selectedRoad = val.trim();
+                },
               ),
               _buildTextField('Pincode', controller: _pincodeController),
               
@@ -690,10 +736,18 @@ class _HotelSetupScreenState extends State<HotelSetupScreen> {
                     });
                     try {
                       // 1. Save Owner Profile Documents
+                      final finalAddress = _address.isNotEmpty
+                          ? _address
+                          : [
+                              if (_selectedRoad != null && _selectedRoad!.isNotEmpty) _selectedRoad,
+                              if (_selectedCity != null && _selectedCity!.isNotEmpty) _selectedCity,
+                              if (_selectedState != null && _selectedState!.isNotEmpty) _selectedState,
+                            ].join(', ');
+
                       final profileData = {
                         'hotel_name': _hotelNameController.text,
                         'owner_name': _ownerNameController.text,
-                        'address': _address,
+                        'address': finalAddress,
                         'state': _selectedState ?? '',
                         'city': _selectedCity ?? '',
                         'pincode': _pincodeController.text,
@@ -734,7 +788,7 @@ class _HotelSetupScreenState extends State<HotelSetupScreen> {
                         name: _hotelNameController.text,
                         description: "Registration submitted from App",
                         city: _selectedCity ?? "Unknown City",
-                        address: _address,
+                        address: finalAddress,
                         latitude: _latitude,
                         longitude: _longitude,
                         pricePerNight: enteredPrice,
