@@ -123,8 +123,6 @@ class _HotelSetupScreenState extends State<HotelSetupScreen> {
     'Laundry Services': false,
     'Seating Areas': false,
     'Swimming Pool': false,
-    'Men': false,
-    'Women': false,
   };
 
   final List<String> _statesList = ['Gujarat', 'Maharashtra', 'Delhi', 'Karnataka'];
@@ -722,7 +720,7 @@ class _HotelSetupScreenState extends State<HotelSetupScreen> {
                         "Free WiFi": 1, "Air Conditioning": 2, "Room Service": 3, "Swimming Pool": 4, "Free Parking": 5,
                         "Wifi": 6, "Rest Rooms": 7, "Fuel Stations": 8, "Dining Facilities": 9, "Comfortable Rooms": 10,
                         "ATM": 11, "Convenience Stores": 12, "First Aid": 13, "Fitness center": 14, "Food Outlets": 15,
-                        "Showers": 16, "Laundry Services": 17, "Seating Areas": 18, "Men": 19, "Women": 20
+                        "Showers": 16, "Laundry Services": 17, "Seating Areas": 18
                       };
                       
                       List<int> selectedAmenities = [];

@@ -42,8 +42,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     'Laundry Services': false,
     'Seating Areas': false,
     'Swimming Pool': false,
-    'Men': false,
-    'Women': false,
   };
 
   final ImagePicker _picker = ImagePicker();
@@ -109,7 +107,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   1: "Free WiFi", 2: "Air Conditioning", 3: "Room Service", 4: "Swimming Pool", 5: "Free Parking",
                   6: "Wifi", 7: "Rest Rooms", 8: "Fuel Stations", 9: "Dining Facilities", 10: "Comfortable Rooms",
                   11: "ATM", 12: "Convenience Stores", 13: "First Aid", 14: "Fitness center", 15: "Food Outlets",
-                  16: "Showers", 17: "Laundry Services", 18: "Seating Areas", 19: "Men", 20: "Women"
+                  16: "Showers", 17: "Laundry Services", 18: "Seating Areas"
                 };
                 // Reset all to false first
                 _amenities.forEach((key, _) => _amenities[key] = false);
@@ -202,7 +200,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             "Free WiFi": 1, "Air Conditioning": 2, "Room Service": 3, "Swimming Pool": 4, "Free Parking": 5,
             "Wifi": 6, "Rest Rooms": 7, "Fuel Stations": 8, "Dining Facilities": 9, "Comfortable Rooms": 10,
             "ATM": 11, "Convenience Stores": 12, "First Aid": 13, "Fitness center": 14, "Food Outlets": 15,
-            "Showers": 16, "Laundry Services": 17, "Seating Areas": 18, "Men": 19, "Women": 20
+            "Showers": 16, "Laundry Services": 17, "Seating Areas": 18
           };
           List<int> selectedAmenities = [];
           _amenities.forEach((key, isSelected) {
