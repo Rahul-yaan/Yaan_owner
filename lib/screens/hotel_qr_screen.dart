@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../services/hotel_service.dart';
 
@@ -59,6 +60,96 @@ class _HotelQrScreenState extends State<HotelQrScreen> {
     );
   }
 
+  Future<void> _shareHotelDetails() async {
+    final hotelName = _qrData?['hotel_name'] ?? _qrData?['hotel']?['name'] ?? 'Hotel';
+    final yaanId = _qrData?['yaan_id'] ?? _qrData?['hotel_code'] ?? 'YAAN';
+    final city = _qrData?['city'] ?? _qrData?['hotel']?['city'] ?? '';
+    final address = _qrData?['address'] ?? _qrData?['hotel']?['address'] ?? '';
+    final locationText = [address, city].where((e) => e.toString().trim().isNotEmpty).join(', ');
+
+    final shareText = '🏨 Book Your Stay at $hotelName\n'
+        '${locationText.isNotEmpty ? '📍 Location: $locationText\n' : ''}'
+        '🆔 Hotel YAAN ID: $yaanId\n\n'
+        '📲 Truck Drivers can scan our Hotel QR code or enter YAAN ID $yaanId using the Yaan User App for instant spot booking!';
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(24),
+            topRight: Radius.circular(24),
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Share Hotel QR Details',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'Share with drivers or transport partners to book via Yaan App',
+              style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+            ),
+            const SizedBox(height: 16),
+            ListTile(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              tileColor: const Color(0xFFF0FDF4),
+              leading: const CircleAvatar(
+                backgroundColor: Color(0xFFDCFCE7),
+                child: Icon(Icons.chat_rounded, color: Color(0xFF16A34A)),
+              ),
+              title: const Text('Share on WhatsApp', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+              subtitle: const Text('Send hotel YAAN ID and booking info', style: TextStyle(fontSize: 12)),
+              onTap: () async {
+                Navigator.pop(ctx);
+                final uri = Uri.parse('whatsapp://send?text=${Uri.encodeComponent(shareText)}');
+                if (await canLaunchUrl(uri)) {
+                  await launchUrl(uri);
+                } else {
+                  final webUri = Uri.parse('https://wa.me/?text=${Uri.encodeComponent(shareText)}');
+                  await launchUrl(webUri, mode: LaunchMode.externalApplication);
+                }
+              },
+            ),
+            const SizedBox(height: 10),
+            ListTile(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              tileColor: const Color(0xFFF8FAFC),
+              leading: const CircleAvatar(
+                backgroundColor: Color(0xFFE2E8F0),
+                child: Icon(Icons.copy_rounded, color: Color(0xFF0F172A)),
+              ),
+              title: const Text('Copy Hotel Details & YAAN ID', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+              subtitle: const Text('Copy full message to paste anywhere', style: TextStyle(fontSize: 12)),
+              onTap: () {
+                Navigator.pop(ctx);
+                _copyToClipboard(shareText, 'Hotel details');
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     const Color primaryColor = Color(0xFFC0392B);
@@ -71,6 +162,11 @@ class _HotelQrScreenState extends State<HotelQrScreen> {
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.share_rounded),
+            onPressed: _shareHotelDetails,
+            tooltip: 'Share QR Details',
+          ),
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
             onPressed: _loadQrCode,
@@ -296,6 +392,21 @@ class _HotelQrScreenState extends State<HotelQrScreen> {
                               tooltip: 'Copy YAAN ID',
                             ),
                           ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: _shareHotelDetails,
+                          icon: const Icon(Icons.share_rounded, size: 18),
+                          label: const Text('Share Hotel QR Details', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFC0392B),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
                         ),
                       ),
                     ],

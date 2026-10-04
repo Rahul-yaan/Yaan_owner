@@ -241,15 +241,24 @@ class _InsightScreenState extends State<InsightScreen> {
       double customerTotal = (basePrice * 1.18 * 100).roundToDouble() / 100.0;
       if (b.totalPayable > 0) customerTotal = b.totalPayable;
 
-      double ownerBaseShare = basePrice * 0.66;
-      double ownerGst = (ownerBaseShare * 0.18 * 100).roundToDouble() / 100.0;
-      double ownerTotalPayout = ((ownerBaseShare + ownerGst) * 100).roundToDouble() / 100.0;
-      double platformFeeCollection = ((customerTotal - ownerTotalPayout) * 100).roundToDouble() / 100.0;
-      double totalGst = ((basePrice * 0.18) * 100).roundToDouble() / 100.0;
+      // Cut 18% GST from customer payment to get base room price
+      if (customerTotal > 0 && (basePrice <= 0 || (customerTotal / 1.18 - basePrice).abs() > 2.0)) {
+        basePrice = ((customerTotal / 1.18) * 100).roundToDouble() / 100.0;
+      }
+
+      // Total 18% GST cut from user payment
+      double totalGst = ((customerTotal - basePrice) > 0 ? (customerTotal - basePrice) : (basePrice * 0.18));
+      totalGst = (totalGst * 100).roundToDouble() / 100.0;
+
+      // Platform Fee: 34% of base room price (Cut 18% GST)
+      double platformFeeNet = ((basePrice * 0.34) * 100).roundToDouble() / 100.0;
+
+      // Owner Final Payable Payout: 66% of base price (Cut 18% GST and platform fee)
+      double ownerFinalPayout = ((basePrice * 0.66) * 100).roundToDouble() / 100.0;
 
       sumTotalAmount += customerTotal;
-      sumPlatformFee += platformFeeCollection;
-      sumPayableAmount += ownerTotalPayout;
+      sumPlatformFee += platformFeeNet;
+      sumPayableAmount += ownerFinalPayout;
       sumGstAmount += totalGst;
     }
 
@@ -266,7 +275,7 @@ class _InsightScreenState extends State<InsightScreen> {
         _buildStatCard('TOTAL AMOUNT', sumTotalAmount.toStringAsFixed(2), const Color(0xFF03A9F4)), // Blue
         _buildStatCard('PLATFORM FEE (34%)', sumPlatformFee.toStringAsFixed(2), const Color(0xFFFF9800)), // Orange
         _buildStatCard('PAYABLE AMOUNT', sumPayableAmount.toStringAsFixed(2), const Color(0xFF00BCD4)), // Cyan
-        _buildStatCard('GST AMOUNT', sumGstAmount.toStringAsFixed(2), const Color(0xFFE91E63)), // Pink
+        _buildStatCard('GST AMOUNT (18%)', sumGstAmount.toStringAsFixed(2), const Color(0xFFE91E63)), // Pink
       ],
     );
   }

@@ -1,5 +1,3 @@
-import 'hotel_qr_screen.dart';
-import 'checkin_scanner_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../core/models/booking_model.dart';
@@ -108,33 +106,9 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                                 letterSpacing: -0.5,
                               ),
                             ),
-                            Row(
-                              children: [
-                                IconButton(
-                                  icon: const Icon(Icons.qr_code_2_rounded, color: Colors.white, size: 23),
-                                  tooltip: 'Hotel QR Standee',
-                                  onPressed: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(builder: (_) => const HotelQrScreen()),
-                                    );
-                                  },
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.qr_code_scanner_rounded, color: Colors.white, size: 23),
-                                  tooltip: 'Driver Check-In Scanner',
-                                  onPressed: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(builder: (_) => const CheckInScannerScreen()),
-                                    );
-                                  },
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.notifications_none_rounded, color: Colors.white, size: 23),
-                                  onPressed: () {},
-                                ),
-                              ],
+                            IconButton(
+                              icon: const Icon(Icons.notifications_none_rounded, color: Colors.white, size: 23),
+                              onPressed: () {},
                             ),
                           ],
                         ),
@@ -228,103 +202,6 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
     }
   }
 
-  Widget _buildQuickActionCards() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-      child: Row(
-        children: [
-          Expanded(
-            child: GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const HotelQrScreen()),
-                );
-              },
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFFC0392B), Color(0xFFA93226)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(14),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFFC0392B).withValues(alpha: 0.25),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: const Row(
-                  children: [
-                    Icon(Icons.qr_code_2_rounded, color: Colors.white, size: 24),
-                    SizedBox(width: 8),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('QR Standee', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
-                          Text('Show for spot booking', style: TextStyle(color: Colors.white70, fontSize: 10)),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const CheckInScannerScreen()),
-                );
-              },
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF1E293B), Color(0xFF0F172A)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(14),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.15),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: const Row(
-                  children: [
-                    Icon(Icons.qr_code_scanner_rounded, color: Color(0xFF27AE60), size: 24),
-                    SizedBox(width: 8),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Check-In Scanner', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
-                          Text('Scan arriving driver', style: TextStyle(color: Colors.white70, fontSize: 10)),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildBookingList(String filter) {
     return StatefulBuilder(
       builder: (context, setState) {
@@ -337,7 +214,6 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
           child: Column(
             children: [
               _buildKycNotificationCard(),
-              if (filter == 'today') _buildQuickActionCards(),
               Expanded(
                 child: FutureBuilder<List<BookingModel>>(
                   future: _bookingService.getBookings(filter: filter),

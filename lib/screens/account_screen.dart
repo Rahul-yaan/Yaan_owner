@@ -1,5 +1,4 @@
 import 'hotel_qr_screen.dart';
-import 'checkin_scanner_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -128,6 +127,9 @@ class _AccountScreenState extends State<AccountScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isApproved = (_kycStatus == 'approved' || _kycStatus == 'active') &&
+        (_hotelStatus == 'approved' || _hotelStatus == 'active');
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
@@ -155,14 +157,12 @@ class _AccountScreenState extends State<AccountScreen> {
                     ),
                     child: Column(
                       children: [
-                        _buildListTile(Icons.qr_code_2_rounded, 'Hotel QR Standee Poster', () {
-                          Navigator.push(context, MaterialPageRoute(builder: (_) => const HotelQrScreen()));
-                        }),
-                        _buildDivider(),
-                        _buildListTile(Icons.qr_code_scanner_rounded, 'Driver Check-In Scanner', () {
-                          Navigator.push(context, MaterialPageRoute(builder: (_) => const CheckInScannerScreen()));
-                        }),
-                        _buildDivider(),
+                        if (isApproved) ...[
+                          _buildListTile(Icons.qr_code_2_rounded, 'Hotel QR Standee & Share', () {
+                            Navigator.push(context, MaterialPageRoute(builder: (_) => const HotelQrScreen()));
+                          }),
+                          _buildDivider(),
+                        ],
                         _buildListTile(Icons.description, 'Terms & Conditions', () {
                           _openLegalPage('/vendor/terms-and-conditions', 'Terms & Conditions');
                         }),
