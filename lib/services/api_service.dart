@@ -20,6 +20,28 @@ class ApiService {
     'ngrok-skip-browser-warning': 'true',
   };
 
+  static Timer? _heartbeatTimer;
+
+  /// Silently ping the backend to wake up Render from sleep or keep it active
+  static Future<void> pingServer() async {
+    try {
+      final cleanBase = baseUrl.isNotEmpty ? baseUrl : 'https://yaan-backend.onrender.com/api';
+      final url = Uri.parse('/ping');
+      await http.get(url, headers: _headers).timeout(const Duration(seconds: 40));
+    } catch (_) {
+      // Ignore background warmup exceptions
+    }
+  }
+
+  /// Start periodic background heartbeat (every 10 minutes) while the owner app is running
+  static void startHeartbeat() {
+    _heartbeatTimer?.cancel();
+    pingServer();
+    _heartbeatTimer = Timer.periodic(const Duration(minutes: 10), (_) {
+      pingServer();
+    });
+  }
+
   static Future<Map<String, dynamic>> register({
     required String name,
     required String email,

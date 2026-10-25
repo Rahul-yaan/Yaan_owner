@@ -102,4 +102,17 @@ class BookingModel {
   String get hotelName => hotel?['name'] ?? '';
 
   String get displaySlot => DateFormatter.formatSlotDate(slot, checkIn: checkIn, checkOut: checkOut);
+
+  // Financial breakdown getters for Hotel Owner Settlement (66% Owner Payout, 34% Platform Fee, 18% GST):
+  double get effectiveBase => (totalAmount - discount) > 0 
+      ? (totalAmount - discount) 
+      : (pricePerNight - discount > 0 ? (pricePerNight - discount) : totalAmount);
+
+  double get ownerNetPayable => ((effectiveBase * 0.66) * 100).roundToDouble() / 100.0;
+  double get platformFee => ((effectiveBase * 0.34) * 100).roundToDouble() / 100.0;
+  double get ownerGst {
+    double totalGstOnBase = ((effectiveBase * 0.18) * 100).roundToDouble() / 100.0;
+    double calculated = ((totalGstOnBase * 0.66) * 100).roundToDouble() / 100.0;
+    return calculated > 0 ? calculated : (((ownerNetPayable * 0.18) * 100).roundToDouble() / 100.0);
+  }
 }

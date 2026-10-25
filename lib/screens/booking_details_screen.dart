@@ -32,24 +32,32 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    double baseAmount = widget.booking.totalAmount > 0 
-        ? widget.booking.totalAmount 
-        : (widget.booking.pricePerNight > 0 
-            ? widget.booking.pricePerNight 
-            : (widget.booking.totalPayable > 0 ? (widget.booking.totalPayable / 1.18) : 0.0));
+    // 1. Base room price set by hotel owner (e.g. ₹ 42.37)
+    double originalBase = widget.booking.pricePerNight > 0 
+        ? widget.booking.pricePerNight 
+        : (widget.booking.totalAmount > 0 
+            ? (widget.booking.totalAmount + widget.booking.discount)
+            : (widget.booking.totalPayable > 0 ? (widget.booking.totalPayable / 1.18 + widget.booking.discount) : 0.0));
 
-    if (baseAmount > 100 && widget.booking.totalPayable > 0 && widget.booking.totalPayable <= baseAmount * 1.25) {
-      baseAmount = widget.booking.totalPayable / 1.18;
+    // 2. Discount / Offer from admin (e.g. ₹ 8.47 if Case 2, or 0 if Case 1)
+    double discountAmount = widget.booking.discount;
+    double netBase = (originalBase - discountAmount) > 0 ? (originalBase - discountAmount) : 0.0;
+    if (netBase <= 0 && widget.booking.totalAmount > 0) {
+      netBase = widget.booking.totalAmount;
     }
 
-    double discountAmount = widget.booking.discount;
-    double discountedBase = (baseAmount - discountAmount) > 0 ? (baseAmount - discountAmount) : 0.0;
+    // 3. Owner 66% Net Share (without GST): 66% of netBase (e.g. ₹ 27.96 in Case 1; ₹ 22.37 in Case 2)
+    double ownerNetPayable = ((netBase * 0.66) * 100).roundToDouble() / 100.0;
 
-    // Standardized 18% GST calculation (e.g. 18% of 60.00 = 10.80)
-    double gstAmount = (discountedBase * 0.18 * 100).roundToDouble() / 100.0;
-    // Total Payable (e.g. 60.00 + 10.80 = 70.80)
-    double payableAmount = (discountedBase + gstAmount * 100).roundToDouble() / 100.0;
-    payableAmount = ((discountedBase + gstAmount) * 100).roundToDouble() / 100.0;
+    // 4. Platform Fee 34% (without GST): 34% of netBase (e.g. ₹ 14.40 in Case 1; ₹ 11.53 in Case 2)
+    double platformFee = ((netBase * 0.34) * 100).roundToDouble() / 100.0;
+
+    // 5. GST 18%: 18% of owner payout (e.g. ₹ 5.04 in Case 1; ₹ 4.03 in Case 2)
+    double totalGstOnBase = ((netBase * 0.18) * 100).roundToDouble() / 100.0;
+    double ownerGst = ((totalGstOnBase * 0.66) * 100).roundToDouble() / 100.0;
+    if (ownerGst <= 0 && ownerNetPayable > 0) {
+      ownerGst = ((ownerNetPayable * 0.18) * 100).roundToDouble() / 100.0;
+    }
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
@@ -192,28 +200,40 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                 children: [
                   const Text('Payment Details', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                   const SizedBox(height: 16),
+                  // Total Amount (Room Base Price)
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text('Total Amount', style: TextStyle(color: Colors.grey)),
                       Row(
                         children: [
-                          if (widget.booking.discount > 0)
-                            Text('₹ ${(baseAmount + widget.booking.discount).toStringAsFixed(2)}', 
+                          if (widget.booking.discount > 0) ...[
+                            Text('₹ ${originalBase.toStringAsFixed(2)}', 
                               style: const TextStyle(color: Colors.grey, decoration: TextDecoration.lineThrough, fontSize: 12)),
-                          if (widget.booking.discount > 0)
                             const SizedBox(width: 4),
-                          Text('₹ ${baseAmount.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.w500)),
+                            Text('₹ ${netBase.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.w500)),
+                          ] else
+                            Text('₹ ${originalBase.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.w500)),
                         ],
                       ),
                     ],
                   ),
+                  if (widget.booking.discount > 0) ...[
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Promotion Applied', style: TextStyle(color: Colors.grey)),
+                        Text('₹ ${widget.booking.discount.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.w500)),
+                      ],
+                    ),
+                  ],
                   const SizedBox(height: 12),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('Promotion Applied', style: TextStyle(color: Colors.grey)),
-                      Text('₹ ${widget.booking.discount.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.w500)),
+                      const Text('Platform Fees ( 34 % )', style: TextStyle(color: Colors.grey)),
+                      Text('₹ ${platformFee.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.w500)),
                     ],
                   ),
                   const SizedBox(height: 12),
@@ -221,7 +241,7 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text('GST ( 18 % )', style: TextStyle(color: Colors.grey)),
-                      Text('₹ ${gstAmount.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.w500)),
+                      Text('₹ ${ownerGst.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.w500)),
                     ],
                   ),
                   const SizedBox(height: 16),
@@ -232,14 +252,13 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const Text('Total Payable Amount', style: TextStyle(fontWeight: FontWeight.bold)),
-                        Text('₹ ${payableAmount.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                        Text('₹ ${ownerNetPayable.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold)),
                       ],
                     ),
                   ),
                 ],
               ),
             ),
-            
             const SizedBox(height: 24),
             
             // Save Button

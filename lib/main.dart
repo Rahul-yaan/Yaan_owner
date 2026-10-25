@@ -6,11 +6,13 @@ import 'package:google_fonts/google_fonts.dart';
 import 'firebase_options.dart';
 import 'providers/hotel_provider.dart';
 import 'screens/splash_screen.dart';
+import 'services/api_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  ApiService.startHeartbeat();
   runApp(
     MultiProvider(
       providers: [
