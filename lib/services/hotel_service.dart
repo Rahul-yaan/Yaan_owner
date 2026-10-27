@@ -21,6 +21,10 @@ class HotelService {
     }
   }
 
+  Future<Map<String, dynamic>> getHotelQrStandee({int? hotelId}) async {
+    return getHotelQrCode(hotelId: hotelId);
+  }
+
   Future<List<HotelModel>> getHotels() async {
     try {
       final response = await _apiClient.dio.get(ApiEndpoints.hotels);
