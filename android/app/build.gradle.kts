@@ -4,6 +4,16 @@ plugins {
     id("com.google.gms.google-services")
 }
 
+import java.util.Properties
+import java.io.FileInputStream
+
+val keystorePropertiesFile = rootProject.file("key.properties")
+val keystoreProperties = Properties()
+val hasKeyProperties = keystorePropertiesFile.exists()
+if (hasKeyProperties) {
+    keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+}
+
 android {
     namespace = "com.yaanvendor.truckparkingbooking"
     compileSdk = flutter.compileSdkVersion
@@ -22,9 +32,27 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        if (hasKeyProperties) {
+            create("release") {
+                keyAlias = keystoreProperties["keyAlias"] as String?
+                keyPassword = keystoreProperties["keyPassword"] as String?
+                storeFile = keystoreProperties["storeFile"]?.let {
+                    val f = file(it)
+                    if (f.exists()) f else rootProject.file(it)
+                }
+                storePassword = keystoreProperties["storePassword"] as String?
+            }
+        }
+    }
+
     buildTypes {
         release {
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = if (hasKeyProperties) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
         }
     }
 }

@@ -129,7 +129,27 @@ class ApiService {
     return prefs.getString('api_token');
   }
 
+  static Future<Map<String, dynamic>> deleteAccount() async {
+    try {
+      final token = await getToken();
+      final headers = Map<String, String>.from(_headers);
+      if (token != null && token.isNotEmpty) {
+        headers['Authorization'] = 'Bearer $token';
+      }
+      final res = await http
+          .delete(
+            Uri.parse('$baseUrl/account'),
+            headers: headers,
+          )
+          .timeout(const Duration(seconds: 20));
+      return jsonDecode(res.body);
+    } catch (e) {
+      return {'error': 'Connection failed: $e', 'message': 'Connection failed: $e'};
+    }
+  }
+
   static Future<void> clearToken() async {
+
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('api_token');
   }

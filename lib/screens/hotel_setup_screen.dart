@@ -49,6 +49,8 @@ class _HotelSetupScreenState extends State<HotelSetupScreen> {
   final TextEditingController _ifscController = TextEditingController();
   final TextEditingController _priceController = TextEditingController(text: '42.37');
   final TextEditingController _totalSlotsController = TextEditingController(text: '10');
+  final TextEditingController _aadhaarNumberController = TextEditingController();
+  final TextEditingController _panNumberController = TextEditingController();
 
   @override
   void initState() {
@@ -69,6 +71,8 @@ class _HotelSetupScreenState extends State<HotelSetupScreen> {
     _ifscController.dispose();
     _priceController.dispose();
     _totalSlotsController.dispose();
+    _aadhaarNumberController.dispose();
+    _panNumberController.dispose();
     super.dispose();
   }
 
@@ -131,7 +135,7 @@ class _HotelSetupScreenState extends State<HotelSetupScreen> {
   final Map<String, List<String>> _stateCities = IndiaLocationData.stateCities;
   final Map<String, List<String>> _cityRoads = IndiaLocationData.cityRoads;
 
-  Widget _buildTextField(String hintText, {bool enabled = true, String? suffixText, VoidCallback? onSuffixTap, TextEditingController? controller, TextInputType? keyboardType}) {
+  Widget _buildTextField(String hintText, {bool enabled = true, String? suffixText, VoidCallback? onSuffixTap, TextEditingController? controller, TextInputType? keyboardType, TextCapitalization textCapitalization = TextCapitalization.none}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: Container(
@@ -147,6 +151,7 @@ class _HotelSetupScreenState extends State<HotelSetupScreen> {
                 controller: controller,
                 enabled: enabled,
                 keyboardType: keyboardType,
+                textCapitalization: textCapitalization,
                 decoration: InputDecoration(
                   hintText: hintText,
                   hintStyle: const TextStyle(color: Colors.black54, fontSize: 14),
@@ -669,8 +674,10 @@ class _HotelSetupScreenState extends State<HotelSetupScreen> {
               
               _buildImageUpload('Upload Your Business Proof'),
               _buildDoubleImageUpload('Front Side', 'Back Side'),
+              _buildTextField('Enter Aadhaar Number (12 digits)', controller: _aadhaarNumberController, keyboardType: TextInputType.number),
               
               _buildImageUpload('Upload Your Pan Card'),
+              _buildTextField('Enter PAN Number', controller: _panNumberController, textCapitalization: TextCapitalization.characters),
               _buildImageUpload('Upload Your Fssai License'),
               
               _buildTextField('Enter Fssai Number', controller: _fssaiController),
@@ -708,6 +715,20 @@ class _HotelSetupScreenState extends State<HotelSetupScreen> {
                     if (_hotelNameController.text.isEmpty) { showError('Hotel Name is required'); return; }
                     if (_ownerNameController.text.isEmpty) { showError('Owner Name is required'); return; }
                     if (_address.isEmpty) { showError('Address is required'); return; }
+
+                    final aadhaarText = _aadhaarNumberController.text.trim();
+                    if (aadhaarText.isEmpty) { showError('Aadhaar Number is required'); return; }
+                    if (!RegExp(r'^[2-9]\d{11}$').hasMatch(aadhaarText)) {
+                      showError('Enter a valid 12-digit Aadhaar Number (cannot start with 0 or 1)');
+                      return;
+                    }
+
+                    final panText = _panNumberController.text.trim().toUpperCase();
+                    if (panText.isEmpty) { showError('PAN Number is required'); return; }
+                    if (!RegExp(r'^[A-Z]{5}\d{4}[A-Z]$').hasMatch(panText)) {
+                      showError('Enter a valid 10-character PAN Number (e.g. ABCDE1234F)');
+                      return;
+                    }
                     if (_fssaiController.text.isEmpty) { showError('FSSAI Number is required'); return; }
                     if (_gstController.text.isEmpty) { showError('GST Number is required'); return; }
                     if (_bankNameController.text.isEmpty) { showError('Bank Name is required'); return; }
@@ -751,6 +772,8 @@ class _HotelSetupScreenState extends State<HotelSetupScreen> {
                         'state': _selectedState ?? '',
                         'city': _selectedCity ?? '',
                         'pincode': _pincodeController.text,
+                        'aadhaar_number': aadhaarText,
+                        'pan_number': panText,
                         'fssai_number': _fssaiController.text,
                         'gst_number': _gstController.text,
                         'bank_name': _bankNameController.text,
@@ -814,8 +837,9 @@ class _HotelSetupScreenState extends State<HotelSetupScreen> {
                       }
                     } catch (e) {
                       if (mounted) {
+                        final errorText = e.toString().replaceFirst('Exception: ', '');
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Backend Error: $e'), backgroundColor: Colors.red),
+                          SnackBar(content: Text(errorText), backgroundColor: Colors.red),
                         );
                       }
                     } finally {

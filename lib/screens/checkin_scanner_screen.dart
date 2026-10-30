@@ -60,12 +60,7 @@ class _CheckInScannerScreenState extends State<CheckInScannerScreen> with Single
   }
 
   int? _extractBookingId(String code) {
-    // 1. Direct integer
-    if (int.tryParse(code) != null) {
-      return int.parse(code);
-    }
-    // 2. YAAN-BOOKING-12 or BOOK-12
-    final match = RegExp(r'(?:YAAN-BOOKING-|BOOK-|BOOKING-)?(\d+)').firstMatch(code);
+    final match = RegExp(r'^YAAN-BOOKING-(\d+)$', caseSensitive: false).firstMatch(code.trim());
     if (match != null && match.group(1) != null) {
       return int.tryParse(match.group(1)!);
     }
@@ -115,21 +110,6 @@ class _CheckInScannerScreenState extends State<CheckInScannerScreen> with Single
         } catch (_) {}
       }
 
-      // If not found by direct ID, search in all bookings
-      if (foundBooking == null) {
-        final allBookings = await _bookingService.getBookings(filter: 'all');
-        final cleanRaw = rawCode.toLowerCase().trim();
-        for (final b in allBookings) {
-          if (b.id.toString() == cleanRaw ||
-              b.truckNo.toLowerCase().contains(cleanRaw) ||
-              b.logisticsNumber.toLowerCase().contains(cleanRaw) ||
-              (b.user?['phone'] ?? '').toString().contains(cleanRaw)) {
-            foundBooking = b;
-            break;
-          }
-        }
-      }
-
       if (mounted) Navigator.of(context, rootNavigator: true).pop(); // dismiss loading
 
       if (!mounted) return;
@@ -150,7 +130,62 @@ class _CheckInScannerScreenState extends State<CheckInScannerScreen> with Single
   void _showBookingCheckInModal(BookingModel booking) {
     final driverName = booking.user?['name'] ?? 'Driver';
     final driverPhone = booking.user?['phone'] ?? '';
-    final isConfirmed = booking.status.toLowerCase() == 'confirmed' || booking.status.toLowerCase() == 'completed';
+    final status = booking.status.toLowerCase();
+    final bool isCompleted = status == 'completed';
+    final bool isConfirmed = status == 'confirmed';
+    final bool isPending = status == 'pending';
+    final bool isCancelled = status == 'cancelled';
+
+    String statusBadge;
+    Color badgeBg;
+    Color badgeTextColor;
+
+    String actionLabel;
+    bool actionEnabled;
+    Color actionBtnColor;
+    IconData actionIcon;
+
+    if (isCompleted) {
+      statusBadge = 'CHECKED IN';
+      badgeBg = const Color(0xFFE8F5E9);
+      badgeTextColor = const Color(0xFF2E7D32);
+      actionLabel = 'CHECKED IN';
+      actionEnabled = false;
+      actionBtnColor = const Color(0xFF94A3B8);
+      actionIcon = Icons.check_circle_rounded;
+    } else if (isConfirmed) {
+      statusBadge = 'READY FOR CHECK-IN';
+      badgeBg = const Color(0xFFE0F2FE);
+      badgeTextColor = const Color(0xFF0369A1);
+      actionLabel = 'READY FOR CHECK-IN';
+      actionEnabled = true;
+      actionBtnColor = const Color(0xFF27AE60);
+      actionIcon = Icons.how_to_reg_rounded;
+    } else if (isPending) {
+      statusBadge = 'PAYMENT PENDING';
+      badgeBg = const Color(0xFFFEF3C7);
+      badgeTextColor = const Color(0xFFB45309);
+      actionLabel = 'PAYMENT PENDING';
+      actionEnabled = false;
+      actionBtnColor = const Color(0xFF94A3B8);
+      actionIcon = Icons.hourglass_top_rounded;
+    } else if (isCancelled) {
+      statusBadge = 'CANCELLED';
+      badgeBg = const Color(0xFFFEE2E2);
+      badgeTextColor = const Color(0xFFB91C1C);
+      actionLabel = 'CANCELLED';
+      actionEnabled = false;
+      actionBtnColor = const Color(0xFF94A3B8);
+      actionIcon = Icons.cancel_rounded;
+    } else {
+      statusBadge = status.toUpperCase();
+      badgeBg = const Color(0xFFF1F5F9);
+      badgeTextColor = const Color(0xFF475569);
+      actionLabel = status.toUpperCase();
+      actionEnabled = false;
+      actionBtnColor = const Color(0xFF94A3B8);
+      actionIcon = Icons.info_outline;
+    }
 
     showModalBottomSheet(
       context: context,
@@ -188,13 +223,13 @@ class _CheckInScannerScreenState extends State<CheckInScannerScreen> with Single
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: isConfirmed ? const Color(0xFFE8F5E9) : const Color(0xFFFFF3E0),
+                        color: badgeBg,
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
-                        isConfirmed ? 'CHECKED IN' : 'READY FOR CHECK-IN',
+                        statusBadge,
                         style: TextStyle(
-                          color: isConfirmed ? const Color(0xFF2E7D32) : const Color(0xFFE65100),
+                          color: badgeTextColor,
                           fontWeight: FontWeight.w800,
                           fontSize: 11,
                         ),
@@ -282,29 +317,50 @@ class _CheckInScannerScreenState extends State<CheckInScannerScreen> with Single
                     Expanded(
                       flex: 2,
                       child: ElevatedButton.icon(
-                        onPressed: isConfirmed
+                        onPressed: !actionEnabled
                             ? null
                             : () async {
-                                final success = await _bookingService.updateBookingStatus(booking.id, 'confirmed');
-                                if (success) {
+                                try {
+                                  final success = await _bookingService.updateBookingStatus(booking.id, 'completed');
+                                  if (success) {
+                                    if (mounted) {
+                                      Navigator.pop(ctx);
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('Driver Checked In Successfully! Booking Completed.'),
+                                          backgroundColor: Color(0xFF27AE60),
+                                        ),
+                                      );
+                                    }
+                                  } else {
+                                    if (mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('Failed to check in driver.'),
+                                          backgroundColor: Color(0xFFC0392B),
+                                        ),
+                                      );
+                                    }
+                                  }
+                                } catch (e) {
                                   if (mounted) {
-                                    Navigator.pop(ctx);
+                                    final err = e.toString().replaceFirst('Exception: ', '');
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text('Driver Checked In Successfully! Booking Confirmed.'),
-                                        backgroundColor: Color(0xFF27AE60),
+                                      SnackBar(
+                                        content: Text(err),
+                                        backgroundColor: const Color(0xFFC0392B),
                                       ),
                                     );
                                   }
                                 }
                               },
-                        icon: Icon(isConfirmed ? Icons.check : Icons.how_to_reg_rounded, color: Colors.white, size: 20),
+                        icon: Icon(actionIcon, color: Colors.white, size: 20),
                         label: Text(
-                          isConfirmed ? 'Already Confirmed' : 'CONFIRM CHECK-IN',
+                          actionLabel,
                           style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
                         ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: isConfirmed ? const Color(0xFF94A3B8) : const Color(0xFF27AE60),
+                          backgroundColor: actionBtnColor,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           elevation: 0,

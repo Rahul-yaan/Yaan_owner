@@ -1,3 +1,6 @@
+import 'package:firebase_auth/firebase_auth.dart';
+import '../services/api_service.dart';
+import 'login_screen.dart';
 import 'hotel_qr_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -54,6 +57,74 @@ class _AccountScreenState extends State<AccountScreen> {
         });
       }
     }
+  }
+
+  void _confirmDeleteAccount() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text(
+            'Delete Account',
+            style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFC0392B)),
+          ),
+          content: const Text(
+            'Are you sure you want to delete your hotel owner account? Your hotel listings and KYC documents will be removed. This action cannot be undone.',
+            style: TextStyle(fontSize: 14, color: Color(0xFF475569)),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('CANCEL', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.pop(context);
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (_) => const Center(
+                    child: CircularProgressIndicator(color: Color(0xFFC0392B)),
+                  ),
+                );
+
+                final res = await ApiService.deleteAccount();
+                if (mounted) Navigator.pop(context);
+
+                if (res['success'] == true) {
+                  await ApiService.clearToken();
+                  try {
+                    await FirebaseAuth.instance.signOut();
+                  } catch (_) {}
+                  if (mounted) {
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(builder: (_) => const LoginScreen()),
+                      (route) => false,
+                    );
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(res['message'] ?? 'Account deleted.')),
+                    );
+                  }
+                } else {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(res['message'] ?? res['error'] ?? 'Failed to delete account.'),
+                        backgroundColor: const Color(0xFFC0392B),
+                      ),
+                    );
+                  }
+                }
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFC0392B)),
+              child: const Text('YES, DELETE', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<void> _logout() async {
@@ -202,6 +273,8 @@ class _AccountScreenState extends State<AccountScreen> {
                         _buildListTile(Icons.help_outline, 'Faq', () {
                           _openLegalPage('/vendor/faq', 'Frequently Asked Questions');
                         }),
+                        _buildDivider(),
+                        _buildListTile(Icons.delete_forever_outlined, 'Delete Account', _confirmDeleteAccount),
                       ],
                     ),
                   ),
