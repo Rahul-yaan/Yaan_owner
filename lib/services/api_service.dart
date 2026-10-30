@@ -7,9 +7,14 @@ import '../core/api/api_endpoints.dart';
 
 class ApiService {
   static String get baseUrl {
-    final envUrl = dotenv.env['API_BASE_URL'];
-    if (envUrl != null && envUrl.isNotEmpty) {
-      return envUrl;
+    String? envUrl;
+    try {
+      envUrl = dotenv.env['API_BASE_URL'];
+    } catch (_) {
+      // dotenv was not loaded (no .env file in the build)
+    }
+    if (envUrl != null && envUrl.trim().isNotEmpty) {
+      return envUrl.trim();
     }
     return ApiEndpoints.baseUrl;
   }

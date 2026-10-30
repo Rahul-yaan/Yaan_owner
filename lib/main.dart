@@ -10,7 +10,12 @@ import 'services/api_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load(fileName: ".env");
+  try {
+    await dotenv.load(fileName: ".env");
+  } catch (e) {
+    // No .env in this build: ApiService falls back to the live server
+    debugPrint("dotenv loading error: $e");
+  }
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   ApiService.startHeartbeat();
   runApp(
