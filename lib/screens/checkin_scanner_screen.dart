@@ -59,20 +59,42 @@ class _CheckInScannerScreenState extends State<CheckInScannerScreen> with Single
     }
   }
 
-  int? _extractBookingId(String code) {
-    // 1. Direct integer
-    if (int.tryParse(code) != null) {
-      return int.parse(code);
-    }
-    // 2. YAAN-BOOKING-12 or BOOK-12
-    final match = RegExp(r'(?:YAAN-BOOKING-|BOOK-|BOOKING-)?(\d+)').firstMatch(code);
-    if (match != null && match.group(1) != null) {
-      return int.tryParse(match.group(1)!);
-    }
+  int? _extractBookingId(String code, {bool manual = false}) {
+    final value = code.trim();
+    // The customer app's check-in pass contains exactly "YAAN-BOOKING-<id>".
+    // Any other scanned QR (truck numbers, hotel QR, random codes) is not a booking.
+    final match = RegExp(r'^YAAN-BOOKING-(\d+)$', caseSensitive: false).firstMatch(value);
+    if (match != null) return int.tryParse(match.group(1)!);
+    // Typed in "Search Booking": a plain booking number is allowed (10-digit phones are not IDs)
+    if (manual && RegExp(r'^\d{1,9}$').hasMatch(value)) return int.tryParse(value);
     return null;
   }
 
-  Future<void> _handleScannedCode(String rawCode) async {
+  // Manual search only: exact truck number or driver phone among this owner's bookings
+  Future<BookingModel?> _findByTruckOrPhone(String input) async {
+    String norm(String s) => s.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+    String last10(String s) {
+      final d = s.replaceAll(RegExp(r'\D'), '');
+      return d.length >= 10 ? d.substring(d.length - 10) : '';
+    }
+
+    final query = norm(input);
+    final phone = last10(input);
+    if (query.length < 4) return null;
+
+    final allBookings = await _bookingService.getBookings(filter: 'all');
+    final matches = allBookings.where((b) {
+      if (norm(b.truckNo) == query) return true;
+      if (phone.isEmpty) return false;
+      return last10((b.user?['phone'] ?? '').toString()) == phone || last10(b.logisticsNumber) == phone;
+    }).toList();
+    if (matches.isEmpty) return null;
+
+    // Several bookings for the same truck/phone: show the one waiting for check-in first
+    return matches.firstWhere((b) => b.status.toLowerCase() == 'confirmed', orElse: () => matches.first);
+  }
+
+  Future<void> _handleScannedCode(String rawCode, {bool manual = false}) async {
     setState(() => _isProcessing = true);
     HapticFeedback.mediumImpact();
 
@@ -106,28 +128,18 @@ class _CheckInScannerScreenState extends State<CheckInScannerScreen> with Single
     );
 
     try {
-      final bookingId = _extractBookingId(rawCode);
+      final bookingId = _extractBookingId(rawCode, manual: manual);
       BookingModel? foundBooking;
 
       if (bookingId != null) {
         try {
+          // Backend only returns bookings of this owner's hotel
           foundBooking = await _bookingService.getBookingDetails(bookingId);
         } catch (_) {}
       }
 
-      // If not found by direct ID, search in all bookings
-      if (foundBooking == null) {
-        final allBookings = await _bookingService.getBookings(filter: 'all');
-        final cleanRaw = rawCode.toLowerCase().trim();
-        for (final b in allBookings) {
-          if (b.id.toString() == cleanRaw ||
-              b.truckNo.toLowerCase().contains(cleanRaw) ||
-              b.logisticsNumber.toLowerCase().contains(cleanRaw) ||
-              (b.user?['phone'] ?? '').toString().contains(cleanRaw)) {
-            foundBooking = b;
-            break;
-          }
-        }
+      if (foundBooking == null && manual) {
+        foundBooking = await _findByTruckOrPhone(rawCode);
       }
 
       if (mounted) Navigator.of(context, rootNavigator: true).pop(); // dismiss loading
@@ -150,7 +162,17 @@ class _CheckInScannerScreenState extends State<CheckInScannerScreen> with Single
   void _showBookingCheckInModal(BookingModel booking) {
     final driverName = booking.user?['name'] ?? 'Driver';
     final driverPhone = booking.user?['phone'] ?? '';
-    final isConfirmed = booking.status.toLowerCase() == 'confirmed' || booking.status.toLowerCase() == 'completed';
+    // completed = driver already checked in, confirmed = paid / pay-at-hotel booking ready for check-in
+    final status = booking.status.toLowerCase();
+    final isCheckedIn = status == 'completed';
+    final canCheckIn = status == 'confirmed';
+    final String statusLabel = isCheckedIn
+        ? 'CHECKED IN'
+        : canCheckIn
+            ? 'READY FOR CHECK-IN'
+            : status == 'cancelled'
+                ? 'CANCELLED'
+                : 'PAYMENT PENDING';
 
     showModalBottomSheet(
       context: context,
@@ -188,13 +210,17 @@ class _CheckInScannerScreenState extends State<CheckInScannerScreen> with Single
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: isConfirmed ? const Color(0xFFE8F5E9) : const Color(0xFFFFF3E0),
+                        color: isCheckedIn
+                            ? const Color(0xFFE8F5E9)
+                            : (canCheckIn ? const Color(0xFFFFF3E0) : const Color(0xFFF1F5F9)),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
-                        isConfirmed ? 'CHECKED IN' : 'READY FOR CHECK-IN',
+                        statusLabel,
                         style: TextStyle(
-                          color: isConfirmed ? const Color(0xFF2E7D32) : const Color(0xFFE65100),
+                          color: isCheckedIn
+                              ? const Color(0xFF2E7D32)
+                              : (canCheckIn ? const Color(0xFFE65100) : const Color(0xFF64748B)),
                           fontWeight: FontWeight.w800,
                           fontSize: 11,
                         ),
@@ -282,29 +308,40 @@ class _CheckInScannerScreenState extends State<CheckInScannerScreen> with Single
                     Expanded(
                       flex: 2,
                       child: ElevatedButton.icon(
-                        onPressed: isConfirmed
+                        onPressed: !canCheckIn
                             ? null
                             : () async {
-                                final success = await _bookingService.updateBookingStatus(booking.id, 'confirmed');
-                                if (success) {
-                                  if (mounted) {
+                                try {
+                                  // Check-in marks the booking completed (pay-at-hotel cash is marked paid by the server)
+                                  final success = await _bookingService.updateBookingStatus(booking.id, 'completed');
+                                  if (success && mounted) {
                                     Navigator.pop(ctx);
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(
-                                        content: Text('Driver Checked In Successfully! Booking Confirmed.'),
+                                        content: Text('Driver Checked In Successfully!'),
                                         backgroundColor: Color(0xFF27AE60),
+                                      ),
+                                    );
+                                  }
+                                } catch (e) {
+                                  if (mounted) {
+                                    Navigator.pop(ctx);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(e.toString().replaceFirst('Exception: ', '')),
+                                        backgroundColor: Colors.red,
                                       ),
                                     );
                                   }
                                 }
                               },
-                        icon: Icon(isConfirmed ? Icons.check : Icons.how_to_reg_rounded, color: Colors.white, size: 20),
+                        icon: Icon(isCheckedIn ? Icons.check : Icons.how_to_reg_rounded, color: Colors.white, size: 20),
                         label: Text(
-                          isConfirmed ? 'Already Confirmed' : 'CONFIRM CHECK-IN',
+                          isCheckedIn ? 'Already Checked In' : (canCheckIn ? 'CONFIRM CHECK-IN' : statusLabel),
                           style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
                         ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: isConfirmed ? const Color(0xFF94A3B8) : const Color(0xFF27AE60),
+                          backgroundColor: canCheckIn ? const Color(0xFF27AE60) : const Color(0xFF94A3B8),
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           elevation: 0,
@@ -411,7 +448,7 @@ class _CheckInScannerScreenState extends State<CheckInScannerScreen> with Single
               final code = textController.text.trim();
               if (code.isNotEmpty) {
                 Navigator.pop(context);
-                _handleScannedCode(code);
+                _handleScannedCode(code, manual: true);
               }
             },
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFC0392B)),
