@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../services/hotel_service.dart';
+import '../widgets/yaan_ui.dart';
 
 class HotelQrScreen extends StatefulWidget {
   final int? hotelId;
@@ -152,26 +153,34 @@ class _HotelQrScreenState extends State<HotelQrScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const Color primaryColor = Color(0xFFC0392B);
-    
+    const Color primaryColor = YaanColors.brand;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F6F9),
+      backgroundColor: YaanColors.ground,
       appBar: AppBar(
-        title: const Text('Hotel QR Standee', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
-        backgroundColor: primaryColor,
-        foregroundColor: Colors.white,
+        title: const Text('Hotel QR Standee', style: TextStyle(color: YaanColors.ink, fontWeight: FontWeight.w600, fontSize: 17)),
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        foregroundColor: YaanColors.ink,
         elevation: 0,
+        shape: const Border(bottom: BorderSide(color: Color(0xFFE4E7EC))),
+        leadingWidth: 64,
+        leading: const Padding(
+          padding: EdgeInsets.only(left: 16),
+          child: Center(child: YaanBackButton()),
+        ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.share_rounded),
+            icon: const Icon(Icons.share_rounded, size: 20),
             onPressed: _shareHotelDetails,
             tooltip: 'Share QR Details',
           ),
           IconButton(
-            icon: const Icon(Icons.refresh_rounded),
+            icon: const Icon(Icons.refresh_rounded, size: 20),
             onPressed: _loadQrCode,
             tooltip: 'Refresh',
           ),
+          const SizedBox(width: 8),
         ],
       ),
       body: _isLoading
@@ -227,186 +236,139 @@ class _HotelQrScreenState extends State<HotelQrScreen> {
     ];
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // STANDEE CARD MOCKUP
+          // Poster preview
           Container(
-            width: double.infinity,
+            clipBehavior: Clip.antiAlias,
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
-                  blurRadius: 20,
-                  offset: const Offset(0, 8),
-                ),
+                BoxShadow(color: YaanColors.ink.withValues(alpha: 0.08), blurRadius: 20, offset: const Offset(0, 6)),
               ],
             ),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Header Banner
+                // Red band with hotel name
                 Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Color(0xFFC0392B), Color(0xFF962D22)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(24),
-                      topRight: Radius.circular(24),
-                    ),
-                  ),
+                  color: YaanColors.brand,
+                  padding: const EdgeInsets.all(20),
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(16),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.18),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.verified_outlined, color: Colors.white, size: 14),
+                            SizedBox(width: 6),
+                            Text(
+                              'OFFICIAL YAAN PARTNER',
+                              style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.8),
                             ),
-                            child: const Row(
-                              children: [
-                                Icon(Icons.verified, color: Colors.white, size: 14),
-                                SizedBox(width: 4),
-                                Text(
-                                  'OFFICIAL YAAN PARTNER',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: 0.5,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                       const SizedBox(height: 10),
                       Text(
                         hotelName,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: -0.3,
-                        ),
+                        style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w700, height: 1.25),
                       ),
                       if (city.isNotEmpty || address.isNotEmpty) ...[
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 2),
                         Text(
                           [address, city].where((e) => e.toString().isNotEmpty).join(', '),
-                          textAlign: TextAlign.center,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 12),
+                          style: const TextStyle(color: Color(0xFFFFF1EF), fontSize: 13),
                         ),
                       ],
                     ],
                   ),
                 ),
 
-                // QR Code Body
+                // QR body
                 Padding(
-                  padding: const EdgeInsets.all(24),
+                  padding: const EdgeInsets.all(20),
                   child: Column(
                     children: [
                       const Text(
                         'SCAN & SPOT BOOK',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 1.5,
-                          color: Color(0xFF1E293B),
-                        ),
+                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, letterSpacing: 1, color: YaanColors.ink),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 2),
                       const Text(
-                        'Truck Drivers can scan with Yaan App to book',
-                        style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                        'Truck drivers can scan with the Yaan app to book',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 12, color: YaanColors.muted),
                       ),
-                      const SizedBox(height: 20),
-
-                      // QR Code Frame
+                      const SizedBox(height: 16),
                       Container(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: const Color(0xFFE2E8F0), width: 2),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.05),
-                              blurRadius: 15,
-                              offset: const Offset(0, 5),
-                            ),
-                          ],
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(color: const Color(0xFFE4E7EC)),
                         ),
                         child: QrImageView(
                           data: qrPayload,
                           version: QrVersions.auto,
-                          size: 210,
+                          size: 200,
                           backgroundColor: Colors.white,
-                          eyeStyle: const QrEyeStyle(eyeShape: QrEyeShape.square, color: Color(0xFF1E293B)),
-                          dataModuleStyle: const QrDataModuleStyle(dataModuleShape: QrDataModuleShape.square, color: Color(0xFF1E293B)),
-                        ),
-                      ),
-
-                      const SizedBox(height: 20),
-
-                      // YAAN ID BADGE
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF8FAFC),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFFE2E8F0)),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text('HOTEL YAAN ID', style: TextStyle(fontSize: 10, color: Color(0xFF64748B), fontWeight: FontWeight.bold)),
-                                const SizedBox(height: 2),
-                                Text(
-                                  yaanId,
-                                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Color(0xFFC0392B), letterSpacing: 0.5),
-                                ),
-                              ],
-                            ),
-                            IconButton(
-                              onPressed: () => _copyToClipboard(yaanId, 'YAAN ID'),
-                              icon: const Icon(Icons.copy_rounded, color: Color(0xFFC0392B), size: 20),
-                              tooltip: 'Copy YAAN ID',
-                            ),
-                          ],
+                          eyeStyle: const QrEyeStyle(eyeShape: QrEyeShape.square, color: YaanColors.navy),
+                          dataModuleStyle: const QrDataModuleStyle(dataModuleShape: QrDataModuleShape.square, color: YaanColors.navy),
                         ),
                       ),
                       const SizedBox(height: 16),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: _shareHotelDetails,
-                          icon: const Icon(Icons.share_rounded, size: 18),
-                          label: const Text('Share Hotel QR Details', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFC0392B),
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          ),
+
+                      // YAAN ID
+                      Container(
+                        padding: const EdgeInsets.fromLTRB(16, 10, 8, 10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF7F8FA),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: YaanColors.border),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'HOTEL YAAN ID',
+                                    style: TextStyle(fontSize: 10, color: YaanColors.muted, fontWeight: FontWeight.w600, letterSpacing: 0.6),
+                                  ),
+                                  Text(
+                                    yaanId,
+                                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: YaanColors.brand, letterSpacing: 1),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Material(
+                              color: YaanColors.brandTint,
+                              borderRadius: BorderRadius.circular(14),
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(14),
+                                onTap: () => _copyToClipboard(yaanId, 'YAAN ID'),
+                                child: const SizedBox(
+                                  width: 44,
+                                  height: 44,
+                                  child: Icon(Icons.copy_rounded, color: YaanColors.brand, size: 18, semanticLabel: 'Copy YAAN ID'),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
@@ -415,51 +377,59 @@ class _HotelQrScreenState extends State<HotelQrScreen> {
               ],
             ),
           ),
+          const SizedBox(height: 14),
+          YaanPrimaryButton(
+            text: 'Share Hotel QR Details',
+            icon: Icons.share_rounded,
+            onPressed: _shareHotelDetails,
+          ),
+          const SizedBox(height: 14),
 
-          const SizedBox(height: 20),
-
-          // INSTRUCTIONS CARD
-          Container(
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
-            ),
+          // How it works
+          YaanCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Row(
                   children: [
-                    Icon(Icons.lightbulb_outline_rounded, color: Color(0xFFF59E0B), size: 20),
+                    Icon(Icons.lightbulb_outline_rounded, color: YaanColors.amber, size: 18),
                     SizedBox(width: 8),
                     Text(
-                      'How Hotel QR Standee Works',
-                      style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: Color(0xFF1E293B)),
+                      'How the hotel QR standee works',
+                      style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: YaanColors.ink),
                     ),
                   ],
                 ),
                 const SizedBox(height: 12),
-                ...instructions.map((step) => Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Icon(Icons.check_circle_outline, color: Color(0xFF27AE60), size: 16),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          step.toString(),
-                          style: const TextStyle(fontSize: 12, color: Color(0xFF475569), height: 1.3),
-                        ),
+                ...instructions.asMap().entries.map((entry) => Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            width: 24,
+                            height: 24,
+                            alignment: Alignment.center,
+                            decoration: const BoxDecoration(color: YaanColors.navy, shape: BoxShape.circle),
+                            child: Text(
+                              '${entry.key + 1}',
+                              style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              // Server steps already start with "1. ", so drop that number here
+                              entry.value.toString().replaceFirst(RegExp(r'^\s*\d+\.\s*'), ''),
+                              style: const TextStyle(fontSize: 13, color: YaanColors.body, height: 1.5),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                )),
+                    )),
               ],
             ),
           ),
-          const SizedBox(height: 30),
         ],
       ),
     );

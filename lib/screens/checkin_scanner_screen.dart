@@ -4,6 +4,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/booking_service.dart';
 import '../core/models/booking_model.dart';
+import '../widgets/yaan_ui.dart';
 import 'booking_details_screen.dart';
 
 class CheckInScannerScreen extends StatefulWidget {
@@ -180,8 +181,15 @@ class _CheckInScannerScreenState extends State<CheckInScannerScreen> with Single
       backgroundColor: Colors.transparent,
       builder: (_) => StatefulBuilder(
         builder: (ctx, setModalState) {
+          final Color chipFg = isCheckedIn
+              ? YaanColors.blueText
+              : (canCheckIn ? YaanColors.greenText : (status == 'cancelled' ? YaanColors.body : YaanColors.amberText));
+          final Color chipBg = isCheckedIn
+              ? YaanColors.blueTint
+              : (canCheckIn ? YaanColors.greenTint : (status == 'cancelled' ? const Color(0xFFF1F2F4) : YaanColors.amberTint));
+
           return Container(
-            padding: const EdgeInsets.fromLTRB(24, 16, 24, 30),
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
             decoration: const BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.only(
@@ -189,100 +197,117 @@ class _CheckInScannerScreenState extends State<CheckInScannerScreen> with Single
                 topRight: Radius.circular(28),
               ),
             ),
-            child: Column(
+            child: SafeArea(
+              top: false,
+              child: Column(
               mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Center(
                   child: Container(
-                    width: 48,
-                    height: 5,
+                    width: 40,
+                    height: 4,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE2E8F0),
-                      borderRadius: BorderRadius.circular(10),
+                      color: YaanColors.border,
+                      borderRadius: BorderRadius.circular(2),
                     ),
                   ),
                 ),
-                const SizedBox(height: 18),
+                const SizedBox(height: 14),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: isCheckedIn
-                            ? const Color(0xFFE8F5E9)
-                            : (canCheckIn ? const Color(0xFFFFF3E0) : const Color(0xFFF1F5F9)),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        statusLabel,
-                        style: TextStyle(
-                          color: isCheckedIn
-                              ? const Color(0xFF2E7D32)
-                              : (canCheckIn ? const Color(0xFFE65100) : const Color(0xFF64748B)),
-                          fontWeight: FontWeight.w800,
-                          fontSize: 11,
-                        ),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(color: chipBg, borderRadius: BorderRadius.circular(10)),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            isCheckedIn || canCheckIn ? Icons.check_circle_outline_rounded : Icons.info_outline_rounded,
+                            size: 14,
+                            color: chipFg,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(statusLabel, style: TextStyle(color: chipFg, fontWeight: FontWeight.w700, fontSize: 11, letterSpacing: 0.6)),
+                        ],
                       ),
                     ),
-                    Text(
-                      'Booking #${booking.id}',
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF64748B)),
-                    ),
+                    const Spacer(),
+                    Text('Booking #${booking.id}', style: const TextStyle(fontSize: 12, color: YaanColors.muted)),
                   ],
                 ),
-                const SizedBox(height: 12),
-                Text(
-                  driverName,
-                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Color(0xFF1E293B)),
-                ),
-                if (driverPhone.isNotEmpty) ...[
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      const Icon(Icons.phone, size: 16, color: Color(0xFF27AE60)),
-                      const SizedBox(width: 6),
-                      Text(driverPhone, style: const TextStyle(color: Color(0xFF475569), fontWeight: FontWeight.w600)),
-                      const SizedBox(width: 8),
-                      GestureDetector(
-                        onTap: () => launchUrl(Uri.parse('tel:$driverPhone')),
-                        child: const Text('Call', style: TextStyle(color: Color(0xFF0284C7), fontWeight: FontWeight.bold)),
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    Container(
+                      width: 46,
+                      height: 46,
+                      alignment: Alignment.center,
+                      decoration: const BoxDecoration(color: YaanColors.navy, shape: BoxShape.circle),
+                      child: Text(
+                        yaanInitials(driverName.toString()),
+                        style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600),
                       ),
-                    ],
-                  ),
-                ],
-                const SizedBox(height: 16),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            driverName,
+                            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: YaanColors.ink),
+                          ),
+                          if (driverPhone.isNotEmpty)
+                            Text(driverPhone, style: const TextStyle(color: YaanColors.muted, fontSize: 12)),
+                        ],
+                      ),
+                    ),
+                    if (driverPhone.isNotEmpty)
+                      Material(
+                        color: YaanColors.greenTint,
+                        shape: const CircleBorder(),
+                        child: IconButton(
+                          tooltip: 'Call driver',
+                          icon: const Icon(Icons.phone_outlined, color: YaanColors.green, size: 20),
+                          onPressed: () => launchUrl(Uri.parse('tel:$driverPhone')),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 14),
 
                 // Booking details grid
                 Container(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF8FAFC),
+                    color: const Color(0xFFF7F8FA),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
                   ),
                   child: Column(
                     children: [
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          _buildDetailItem('TRUCK NUMBER', booking.truckNo.isNotEmpty ? booking.truckNo : 'Not Specified'),
-                          _buildDetailItem('TRUCK TYPE', booking.truckType.isNotEmpty ? booking.truckType : 'Standard'),
+                          Expanded(child: _buildDetailItem('TRUCK NUMBER', booking.truckNo.isNotEmpty ? booking.truckNo : 'Not Specified')),
+                          Expanded(child: _buildDetailItem('TRUCK TYPE', booking.truckType.isNotEmpty ? booking.truckType : 'Standard')),
                         ],
                       ),
-                      const Divider(height: 20),
+                      const SizedBox(height: 10),
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          _buildDetailItem('BOOKING DATE', booking.bookingDate.isNotEmpty ? booking.bookingDate : booking.checkIn),
-                          _buildDetailItem('TOTAL PAYABLE', '₹${booking.totalPayable > 0 ? booking.totalPayable.toStringAsFixed(2) : booking.totalAmount.toStringAsFixed(2)}'),
+                          Expanded(child: _buildDetailItem('BOOKING DATE', booking.bookingDate.isNotEmpty ? booking.bookingDate : booking.checkIn)),
+                          Expanded(
+                            child: _buildDetailItem(
+                              'TOTAL PAYABLE',
+                              '₹${booking.totalPayable > 0 ? booking.totalPayable.toStringAsFixed(2) : booking.totalAmount.toStringAsFixed(2)}',
+                            ),
+                          ),
                         ],
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
 
                 // Action Buttons
                 Row(
@@ -297,14 +322,15 @@ class _CheckInScannerScreenState extends State<CheckInScannerScreen> with Single
                           );
                         },
                         style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          side: const BorderSide(color: Color(0xFF64748B)),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          minimumSize: const Size.fromHeight(52),
+                          foregroundColor: YaanColors.ink,
+                          side: const BorderSide(color: YaanColors.border),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                         ),
-                        child: const Text('Full Details', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
+                        child: const Text('Full Details', style: TextStyle(fontWeight: FontWeight.w600)),
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 10),
                     Expanded(
                       flex: 2,
                       child: ElevatedButton.icon(
@@ -337,13 +363,14 @@ class _CheckInScannerScreenState extends State<CheckInScannerScreen> with Single
                               },
                         icon: Icon(isCheckedIn ? Icons.check : Icons.how_to_reg_rounded, color: Colors.white, size: 20),
                         label: Text(
-                          isCheckedIn ? 'Already Checked In' : (canCheckIn ? 'CONFIRM CHECK-IN' : statusLabel),
-                          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                          isCheckedIn ? 'Already Checked In' : (canCheckIn ? 'Confirm Check-In' : statusLabel),
+                          style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.white),
                         ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: canCheckIn ? const Color(0xFF27AE60) : const Color(0xFF94A3B8),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          backgroundColor: canCheckIn ? YaanColors.green : const Color(0xFF94A3B8),
+                          disabledBackgroundColor: const Color(0xFF94A3B8),
+                          minimumSize: const Size.fromHeight(52),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                           elevation: 0,
                         ),
                       ),
@@ -351,6 +378,7 @@ class _CheckInScannerScreenState extends State<CheckInScannerScreen> with Single
                   ],
                 ),
               ],
+            ),
             ),
           );
         },
@@ -364,9 +392,9 @@ class _CheckInScannerScreenState extends State<CheckInScannerScreen> with Single
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 10, color: Color(0xFF94A3B8), fontWeight: FontWeight.bold)),
+        Text(label, style: const TextStyle(fontSize: 10, color: YaanColors.muted, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
         const SizedBox(height: 2),
-        Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
+        Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: YaanColors.ink)),
       ],
     );
   }
@@ -563,8 +591,8 @@ class _CheckInScannerScreenState extends State<CheckInScannerScreen> with Single
                     ),
                   ),
                   const Text(
-                    'Driver Check-In Scanner',
-                    style: TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.bold),
+                    'Driver Check-In',
+                    style: TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w600),
                   ),
                   Row(
                     children: [
@@ -629,18 +657,18 @@ class _CheckInScannerScreenState extends State<CheckInScannerScreen> with Single
                 const SizedBox(height: 16),
                 SizedBox(
                   width: double.infinity,
-                  height: 50,
+                  height: 52,
                   child: ElevatedButton.icon(
                     onPressed: _showManualSearchDialog,
                     icon: const Icon(Icons.search, color: Colors.white, size: 20),
                     label: const Text(
-                      'Search by Booking ID / Phone / Truck',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                      'Search by booking ID, phone or truck',
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFC0392B),
+                      backgroundColor: YaanColors.brand,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      elevation: 4,
+                      elevation: 0,
                     ),
                   ),
                 ),

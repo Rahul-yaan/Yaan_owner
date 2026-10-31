@@ -2,7 +2,7 @@
 import 'package:pinput/pinput.dart';
 import '../services/auth_service.dart';
 import '../services/api_service.dart';
-import '../widgets/custom_button.dart';
+import '../widgets/yaan_ui.dart';
 import 'login_screen.dart';
 
 class OtpScreen extends StatefulWidget {
@@ -85,112 +85,69 @@ class _OtpScreenState extends State<OtpScreen> {
   @override
   Widget build(BuildContext context) {
     final defaultPinTheme = PinTheme(
-      width: 50,
+      width: 48,
       height: 56,
       textStyle: const TextStyle(
         fontSize: 22,
-        color: Color(0xFFC0392B),
+        color: YaanColors.ink,
         fontWeight: FontWeight.w600,
       ),
       decoration: BoxDecoration(
-        color: const Color(0xFFF9FAFB),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        color: YaanColors.field,
+        border: Border.all(color: YaanColors.border),
         borderRadius: BorderRadius.circular(14),
       ),
     );
 
     final focusedPinTheme = defaultPinTheme.copyDecorationWith(
-      border: Border.all(color: const Color(0xFFC0392B), width: 2),
+      color: Colors.white,
+      border: Border.all(color: YaanColors.brand, width: 2),
       borderRadius: BorderRadius.circular(14),
-      boxShadow: [
-        BoxShadow(
-          color: const Color(0xFFC0392B).withValues(alpha: 0.15),
-          blurRadius: 8,
-          offset: const Offset(0, 2),
-        ),
-      ],
     );
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      body: Column(
-        children: [
-          // Executive Gradient Header
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.fromLTRB(24, 64, 24, 36),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFFD32F2F), Color(0xFFC0392B)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(32),
-                bottomRight: Radius.circular(32),
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFFC0392B).withValues(alpha: 0.25),
-                  blurRadius: 20,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            child: Column(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.18),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.admin_panel_settings_rounded,
-                    color: Colors.white,
-                    size: 38,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Owner Verification',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: -0.5,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  'OTP sent to ${widget.phoneNumber}',
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.9),
-                    fontSize: 14,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 12),
-                  const Text(
-                    'Enter Verification Code',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF1E293B),
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const YaanBackButton(),
+                    const SizedBox(height: 16),
+                    Container(
+                      width: 56,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        color: YaanColors.brandTint,
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      child: const Icon(Icons.phone_iphone_rounded, color: YaanColors.brand, size: 26),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  Center(
-                    child: Pinput(
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Owner Verification',
+                      style: TextStyle(color: YaanColors.ink, fontSize: 26, fontWeight: FontWeight.w700, letterSpacing: -0.4),
+                    ),
+                    const SizedBox(height: 6),
+                    RichText(
+                      text: TextSpan(
+                        style: const TextStyle(color: YaanColors.muted, fontSize: 14, height: 1.5, fontFamily: 'Poppins'),
+                        children: [
+                          const TextSpan(text: 'Enter the 6-digit code sent to '),
+                          TextSpan(
+                            text: widget.phoneNumber,
+                            style: const TextStyle(color: YaanColors.ink, fontWeight: FontWeight.w600),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 22),
+                    const YaanFieldLabel('Verification code'),
+                    Pinput(
                       length: 6,
                       controller: _otpCtrl,
                       defaultPinTheme: defaultPinTheme,
@@ -198,130 +155,69 @@ class _OtpScreenState extends State<OtpScreen> {
                       autofocus: true,
                       pinputAutovalidateMode: PinputAutovalidateMode.onSubmit,
                       showCursor: true,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     ),
-                  ),
-                  const SizedBox(height: 32),
-                  const Text(
-                    'Set Password',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF1E293B),
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.04),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
+                    const SizedBox(height: 6),
+                    Row(
                       children: [
-                        TextField(
-                          controller: _passCtrl,
-                          obscureText: !_passVisible,
-                          decoration: InputDecoration(
-                            labelText: 'Set Password',
-                            hintText: 'Enter at least 6 characters',
-                            prefixIcon: const Icon(
-                              Icons.lock_outline_rounded,
-                              color: Color(0xFFC0392B),
-                            ),
-                            suffixIcon: IconButton(
-                              icon: Icon(
-                                _passVisible
-                                    ? Icons.visibility_off_outlined
-                                    : Icons.visibility_outlined,
-                                color: const Color(0xFF94A3B8),
-                              ),
-                              onPressed: () =>
-                                  setState(() => _passVisible = !_passVisible),
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(color: Color(0xFFC0392B), width: 1.5),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        TextField(
-                          controller: _confirmCtrl,
-                          obscureText: true,
-                          decoration: InputDecoration(
-                            labelText: 'Confirm Password',
-                            hintText: 'Re-enter your password',
-                            prefixIcon: const Icon(
-                              Icons.lock_reset_rounded,
-                              color: Color(0xFFC0392B),
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(color: Color(0xFFC0392B), width: 1.5),
-                            ),
+                        const Text("Didn't get it?", style: TextStyle(color: YaanColors.muted, fontSize: 12)),
+                        TextButton(
+                          onPressed: _resendOtp,
+                          child: const Text(
+                            'Resend OTP',
+                            style: TextStyle(color: YaanColors.brand, fontSize: 12, fontWeight: FontWeight.w600),
                           ),
                         ),
                       ],
                     ),
-                  ),
-                  const SizedBox(height: 32),
-                  CustomButton(
-                    text: 'Verify & Continue',
-                    onPressed: _verify,
-                    isLoading: _loading,
-                  ),
-                  const SizedBox(height: 20),
-                  Center(
-                    child: TextButton(
-                      onPressed: _resendOtp,
-                      child: RichText(
-                        text: const TextSpan(
-                          text: "Didn't receive OTP? ",
-                          style: TextStyle(
-                            color: Color(0xFF64748B),
-                            fontSize: 14,
+                    const SizedBox(height: 8),
+                    const Divider(height: 1, color: Color(0xFFE4E7EC)),
+                    const SizedBox(height: 20),
+                    const Text(
+                      'Set your password',
+                      style: TextStyle(color: YaanColors.ink, fontSize: 15, fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 14),
+                    const YaanFieldLabel('Password'),
+                    TextField(
+                      controller: _passCtrl,
+                      obscureText: !_passVisible,
+                      decoration: yaanInputDecoration(
+                        hint: 'Enter at least 6 characters',
+                        icon: Icons.lock_outline_rounded,
+                        suffix: IconButton(
+                          tooltip: _passVisible ? 'Hide password' : 'Show password',
+                          icon: Icon(
+                            _passVisible ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                            color: YaanColors.muted,
                           ),
-                          children: [
-                            TextSpan(
-                              text: 'Resend OTP',
-                              style: TextStyle(
-                                color: Color(0xFFC0392B),
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
+                          onPressed: () => setState(() => _passVisible = !_passVisible),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 6),
+                    const Text('At least 6 characters', style: TextStyle(color: YaanColors.muted, fontSize: 11)),
+                    const SizedBox(height: 14),
+                    const YaanFieldLabel('Confirm password'),
+                    TextField(
+                      controller: _confirmCtrl,
+                      obscureText: true,
+                      decoration: yaanInputDecoration(hint: 'Re-enter your password', icon: Icons.lock_reset_rounded),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+              child: YaanPrimaryButton(
+                text: 'Verify & Continue',
+                onPressed: _verify,
+                loading: _loading,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

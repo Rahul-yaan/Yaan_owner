@@ -1,7 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../services/auth_service.dart';
-import '../widgets/custom_button.dart';
+import '../widgets/yaan_ui.dart';
 import 'otp_screen.dart';
 import 'login_screen.dart';
 
@@ -81,192 +81,181 @@ class _RegisterScreenState extends State<RegisterScreen> {
   void _snack(String msg) =>
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
 
+  void _goToLogin() => Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+      );
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      body: Column(
-        children: [
-          // Executive Gradient Header
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.fromLTRB(24, 68, 24, 36),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFFD32F2F), Color(0xFFC0392B)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+      backgroundColor: YaanColors.ground,
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Navy header with the 3 steps to go live
+            Container(
+              padding: EdgeInsets.fromLTRB(20, MediaQuery.of(context).padding.top + 16, 20, 64),
+              decoration: const BoxDecoration(
+                color: YaanColors.navy,
+                borderRadius: BorderRadius.vertical(bottom: Radius.circular(32)),
               ),
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(32),
-                bottomRight: Radius.circular(32),
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFFC0392B).withValues(alpha: 0.25),
-                  blurRadius: 20,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Register Partner Account',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 26,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: -0.5,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  'Fill in your details to start listing your hotel properties',
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.88),
-                    fontSize: 14,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 8),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.04),
-                          blurRadius: 14,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      children: [
-                        TextField(
-                          controller: _nameCtrl,
-                          decoration: InputDecoration(
-                            labelText: 'Owner Full Name',
-                            hintText: 'Jane Doe',
-                            prefixIcon: const Icon(
-                              Icons.person_outline_rounded,
-                              color: Color(0xFFC0392B),
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(color: Color(0xFFC0392B), width: 1.5),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 18),
-                        TextField(
-                          controller: _emailCtrl,
-                          keyboardType: TextInputType.emailAddress,
-                          decoration: InputDecoration(
-                            labelText: 'Work Email Address',
-                            hintText: 'owner@hotel.com',
-                            prefixIcon: const Icon(
-                              Icons.email_outlined,
-                              color: Color(0xFFC0392B),
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(color: Color(0xFFC0392B), width: 1.5),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 18),
-                        TextField(
-                          controller: _phoneCtrl,
-                          keyboardType: TextInputType.phone,
-                          maxLength: 10,
-                          decoration: InputDecoration(
-                            labelText: 'Mobile Number',
-                            hintText: '9876543210',
-                            prefixIcon: const Icon(
-                              Icons.phone_outlined,
-                              color: Color(0xFFC0392B),
-                            ),
-                            prefixText: '+91  ',
-                            counterText: '',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(color: Color(0xFFC0392B), width: 1.5),
-                            ),
-                          ),
-                        ),
-                      ],
+                  YaanBackButton(onDark: true, onTap: _goToLogin),
+                  const SizedBox(height: 18),
+                  const Text(
+                    'BECOME A YAAN PARTNER',
+                    style: TextStyle(
+                      color: YaanColors.headerKicker,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 1.4,
                     ),
                   ),
-                  const SizedBox(height: 28),
-                  CustomButton(
-                    text: 'Register & Send OTP',
-                    onPressed: _submit,
-                    isLoading: _loading,
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Register Partner Account',
+                    style: TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.w700, letterSpacing: -0.4),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Fill in your details to start listing your hotel',
+                    style: TextStyle(color: YaanColors.headerSub, fontSize: 13),
                   ),
                   const SizedBox(height: 18),
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text(
-                        'Already registered?',
-                        style: TextStyle(color: Color(0xFF64748B)),
-                      ),
-                      TextButton(
-                        onPressed: () => Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(builder: (_) => const LoginScreen()),
-                        ),
-                        child: const Text(
-                          'Login',
-                          style: TextStyle(
-                            color: Color(0xFFC0392B),
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
+                      _stepDot('1', 'Account', active: true),
+                      _stepLine(),
+                      _stepDot('2', 'Hotel details'),
+                      _stepLine(),
+                      _stepDot('3', 'Approval'),
                     ],
                   ),
                 ],
               ),
             ),
-          ),
-        ],
+
+            // Form card overlapping the header
+            Transform.translate(
+              offset: const Offset(0, -40),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Container(
+                  padding: const EdgeInsets.fromLTRB(18, 22, 18, 22),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: YaanColors.ink.withValues(alpha: 0.10),
+                        blurRadius: 32,
+                        offset: const Offset(0, 12),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const YaanFieldLabel('Owner full name'),
+                      TextField(
+                        controller: _nameCtrl,
+                        textCapitalization: TextCapitalization.words,
+                        decoration: yaanInputDecoration(hint: 'Jane Doe', icon: Icons.person_outline_rounded),
+                      ),
+                      const SizedBox(height: 16),
+                      const YaanFieldLabel('Work email address'),
+                      TextField(
+                        controller: _emailCtrl,
+                        keyboardType: TextInputType.emailAddress,
+                        decoration: yaanInputDecoration(hint: 'owner@hotel.com', icon: Icons.email_outlined),
+                      ),
+                      const SizedBox(height: 16),
+                      const YaanFieldLabel('Mobile number'),
+                      TextField(
+                        controller: _phoneCtrl,
+                        keyboardType: TextInputType.phone,
+                        maxLength: 10,
+                        decoration: yaanInputDecoration(hint: '9876543210', icon: Icons.phone_outlined, prefixText: '+91  '),
+                      ),
+                      const SizedBox(height: 6),
+                      const Text(
+                        'We will send a 6-digit OTP to this number',
+                        style: TextStyle(color: YaanColors.muted, fontSize: 11),
+                      ),
+                      const SizedBox(height: 20),
+                      YaanPrimaryButton(
+                        text: 'Register & Send OTP',
+                        onPressed: _submit,
+                        loading: _loading,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            Transform.translate(
+              offset: const Offset(0, -24),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text('Already registered?', style: TextStyle(color: YaanColors.muted, fontSize: 13)),
+                  TextButton(
+                    onPressed: _goToLogin,
+                    child: const Text(
+                      'Login',
+                      style: TextStyle(color: YaanColors.brand, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
+
+  Widget _stepDot(String number, String label, {bool active = false}) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 20,
+          height: 20,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: active ? YaanColors.brand : Colors.transparent,
+            shape: BoxShape.circle,
+            border: active ? null : Border.all(color: const Color(0xFF5C6878)),
+          ),
+          child: Text(
+            number,
+            style: TextStyle(color: active ? Colors.white : YaanColors.headerSub, fontSize: 10, fontWeight: FontWeight.w600),
+          ),
+        ),
+        const SizedBox(width: 6),
+        Text(
+          label,
+          style: TextStyle(
+            color: active ? Colors.white : YaanColors.headerSub,
+            fontSize: 11,
+            fontWeight: active ? FontWeight.w600 : FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _stepLine() => Expanded(
+        child: Container(
+          height: 1,
+          margin: const EdgeInsets.symmetric(horizontal: 6),
+          color: Colors.white.withValues(alpha: 0.25),
+        ),
+      );
 }

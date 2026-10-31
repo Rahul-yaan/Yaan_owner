@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../core/models/booking_model.dart';
 import '../services/booking_service.dart';
 import '../core/utils/date_formatter.dart';
+import '../widgets/yaan_ui.dart';
 
 class InsightScreen extends StatefulWidget {
   const InsightScreen({super.key});
@@ -132,19 +133,35 @@ class _InsightScreenState extends State<InsightScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFFC0392B),
-        foregroundColor: Colors.white,
-        elevation: 0,
-        title: const Text('Business Insight', style: TextStyle(fontWeight: FontWeight.bold)),
+      backgroundColor: YaanColors.ground,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(84),
+        child: Container(
+          decoration: const BoxDecoration(
+            color: YaanColors.navy,
+            borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
+          ),
+          child: const SafeArea(
+            bottom: false,
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(20, 8, 20, 12),
+                child: Text(
+                  'Business Insight',
+                  style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w700, letterSpacing: -0.4),
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator(color: YaanColors.brand))
           : SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   // Filter Chips
                   SingleChildScrollView(
@@ -161,9 +178,9 @@ class _InsightScreenState extends State<InsightScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 24),
-                  
-                  // Stats Grid
+                  const SizedBox(height: 16),
+
+                  // Stats
                   _buildStatsGrid(),
                 ],
               ),
@@ -173,25 +190,39 @@ class _InsightScreenState extends State<InsightScreen> {
 
   Widget _buildFilterChip(String label, {VoidCallback? onTap}) {
     final isSelected = _selectedFilter == label;
-    return GestureDetector(
-      onTap: onTap ?? () {
-        setState(() {
-          _selectedFilter = label;
-        });
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFC0392B) : Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: isSelected ? const Color(0xFFC0392B) : Colors.grey.shade300),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: isSelected ? Colors.white : Colors.black87,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-            fontSize: 13,
+    return Material(
+      color: isSelected ? YaanColors.brand : Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(color: isSelected ? YaanColors.brand : YaanColors.border),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: onTap ?? () {
+          setState(() {
+            _selectedFilter = label;
+          });
+        },
+        child: Container(
+          height: 40,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          alignment: Alignment.center,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (label == 'Custom') ...[
+                Icon(Icons.calendar_today_outlined, size: 14, color: isSelected ? Colors.white : YaanColors.ink),
+                const SizedBox(width: 6),
+              ],
+              Text(
+                label,
+                style: TextStyle(
+                  color: isSelected ? Colors.white : YaanColors.ink,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                  fontSize: 12,
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -262,52 +293,124 @@ class _InsightScreenState extends State<InsightScreen> {
       sumGstAmount += totalGst;
     }
 
-    return GridView.count(
-      crossAxisCount: 2,
-      crossAxisSpacing: 16,
-      mainAxisSpacing: 16,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      childAspectRatio: 1.5, // To make them look like rectangles
+    // Split bar parts (same numbers as before, shown as one bar + list)
+    const payoutColor = Color(0xFF2A78D6);
+    const feeColor = Color(0xFFEB6834);
+    const gstColor = Color(0xFF1BAF7A);
+    final splitTotal = sumPayableAmount + sumPlatformFee + sumGstAmount;
+    int share(double v) => splitTotal > 0 ? ((v / splitTotal) * 1000).round() : 0;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _buildStatCard('TOTAL ORDER', totalOrder.toString(), const Color(0xFF1ABC9C)), // Green
-        _buildStatCard('TODAY ORDER', todayOrder.toString(), const Color(0xFF673AB7)), // Purple
-        _buildStatCard('TOTAL AMOUNT', sumTotalAmount.toStringAsFixed(2), const Color(0xFF03A9F4)), // Blue
-        _buildStatCard('PLATFORM FEE (34%)', sumPlatformFee.toStringAsFixed(2), const Color(0xFFFF9800)), // Orange
-        _buildStatCard('PAYABLE AMOUNT', sumPayableAmount.toStringAsFixed(2), const Color(0xFF00BCD4)), // Cyan
-        _buildStatCard('GST AMOUNT (18%)', sumGstAmount.toStringAsFixed(2), const Color(0xFFE91E63)), // Pink
+        YaanCard(
+          padding: const EdgeInsets.all(18),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text('Payable amount (your payout)', style: TextStyle(color: YaanColors.muted, fontSize: 13)),
+              const SizedBox(height: 2),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  '₹${sumPayableAmount.toStringAsFixed(2)}',
+                  style: const TextStyle(color: YaanColors.ink, fontSize: 44, fontWeight: FontWeight.w600, letterSpacing: -1),
+                ),
+              ),
+              Text(
+                '66% of room price · from $totalOrder ${totalOrder == 1 ? 'order' : 'orders'}',
+                style: const TextStyle(color: YaanColors.muted, fontSize: 12),
+              ),
+              const SizedBox(height: 14),
+              if (splitTotal > 0)
+                Semantics(
+                  label: 'Total paid by drivers ₹${sumTotalAmount.toStringAsFixed(2)}: '
+                      'your payout ₹${sumPayableAmount.toStringAsFixed(2)}, '
+                      'platform fee ₹${sumPlatformFee.toStringAsFixed(2)}, '
+                      'GST ₹${sumGstAmount.toStringAsFixed(2)}',
+                  child: SizedBox(
+                    height: 8,
+                    child: Row(
+                      children: [
+                        _barPart(share(sumPayableAmount), payoutColor),
+                        const SizedBox(width: 2),
+                        _barPart(share(sumPlatformFee), feeColor),
+                        const SizedBox(width: 2),
+                        _barPart(share(sumGstAmount), gstColor),
+                      ],
+                    ),
+                  ),
+                ),
+              const SizedBox(height: 14),
+              _legendRow(payoutColor, 'Your payout', sumPayableAmount),
+              const SizedBox(height: 10),
+              _legendRow(feeColor, 'Platform fee (34%)', sumPlatformFee),
+              const SizedBox(height: 10),
+              _legendRow(gstColor, 'GST amount (18%)', sumGstAmount),
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 12),
+                child: Divider(height: 1, color: Color(0xFFE4E7EC)),
+              ),
+              Row(
+                children: [
+                  const Expanded(
+                    child: Text('Total amount paid by drivers', style: TextStyle(color: YaanColors.ink, fontSize: 13, fontWeight: FontWeight.w600)),
+                  ),
+                  Text(
+                    '₹${sumTotalAmount.toStringAsFixed(2)}',
+                    style: const TextStyle(color: YaanColors.ink, fontSize: 13, fontWeight: FontWeight.w700),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(child: _buildStatCard('Total orders', totalOrder.toString(), Icons.receipt_long_outlined)),
+            const SizedBox(width: 12),
+            Expanded(child: _buildStatCard('Today orders', todayOrder.toString(), Icons.schedule_rounded)),
+          ],
+        ),
       ],
     );
   }
 
-  Widget _buildStatCard(String title, String value, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(8),
-      ),
+  Widget _barPart(int flex, Color color) {
+    if (flex <= 0) return const SizedBox.shrink();
+    return Expanded(
+      flex: flex,
+      child: Container(decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(4))),
+    );
+  }
+
+  Widget _legendRow(Color color, String label, double value) {
+    return Row(
+      children: [
+        Container(width: 10, height: 10, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+        const SizedBox(width: 10),
+        Expanded(child: Text(label, style: const TextStyle(color: YaanColors.body, fontSize: 13))),
+        Text('₹${value.toStringAsFixed(2)}', style: const TextStyle(color: YaanColors.ink, fontSize: 13, fontWeight: FontWeight.w600)),
+      ],
+    );
+  }
+
+  Widget _buildStatCard(String title, String value, IconData icon) {
+    return YaanCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(
-            title,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 12,
-            ),
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(color: YaanColors.ground, borderRadius: BorderRadius.circular(12)),
+            child: Icon(icon, size: 18, color: YaanColors.ink),
           ),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 24,
-            ),
-          ),
+          const SizedBox(height: 10),
+          Text(title, style: const TextStyle(color: YaanColors.muted, fontSize: 12)),
+          Text(value, style: const TextStyle(color: YaanColors.ink, fontSize: 26, fontWeight: FontWeight.w600)),
         ],
       ),
     );

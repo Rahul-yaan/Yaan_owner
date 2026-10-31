@@ -7,6 +7,7 @@ import '../core/models/user_model.dart';
 import '../services/profile_service.dart';
 import '../services/auth_service.dart';
 import '../services/api_service.dart';
+import '../widgets/yaan_ui.dart';
 import 'edit_profile_screen.dart';
 import 'login_screen.dart';
 
@@ -20,7 +21,7 @@ class AccountScreen extends StatefulWidget {
 class _AccountScreenState extends State<AccountScreen> {
   final ProfileService _profileService = ProfileService();
   final AuthService _authService = AuthService();
-  
+
   OwnerProfileModel? _profile;
   UserModel? _user;
   String? _kycStatus;
@@ -191,118 +192,120 @@ class _AccountScreenState extends State<AccountScreen> {
     }
   }
 
+  Future<void> _openEditProfile() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EditProfileScreen(
+          profile: _profile,
+          user: _user,
+        ),
+      ),
+    );
+    if (result == true) {
+      _fetchProfile();
+    }
+  }
+
+  String get _displayName {
+    if (_profile != null && _profile!.ownerName.isNotEmpty) return _profile!.ownerName;
+    if (_user != null && _user!.name.isNotEmpty) return _user!.name;
+    return 'User Name';
+  }
+
   @override
   Widget build(BuildContext context) {
     final bool isApproved = (_kycStatus == 'approved' || _kycStatus == 'active') &&
         (_hotelStatus == 'approved' || _hotelStatus == 'active');
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFFC0392B),
-        foregroundColor: Colors.white,
-        elevation: 0,
-        title: const Text('Account', style: TextStyle(fontWeight: FontWeight.bold)),
-      ),
+      backgroundColor: YaanColors.ground,
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFFC0392B)))
+          ? const Center(child: CircularProgressIndicator(color: YaanColors.brand))
           : SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _buildKycNotificationCard(),
                   _buildProfileCard(),
-                  const SizedBox(height: 24),
-                  const Text('Other Information', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  const SizedBox(height: 12),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        _buildKycNotificationCard(),
                         if (isApproved) ...[
-                          _buildListTile(Icons.qr_code_2_rounded, 'Hotel QR Standee & Share', () {
-                            Navigator.push(context, MaterialPageRoute(builder: (_) => const HotelQrScreen()));
-                          }),
-                          _buildDivider(),
+                          _buildQrCard(),
+                          const SizedBox(height: 14),
                         ],
-                        _buildListTile(Icons.description, 'Terms & Conditions', () {
-                          _openLegalPage('/vendor/terms-and-conditions', 'Terms & Conditions');
-                        }),
-                        _buildDivider(),
-                        _buildListTile(Icons.info_outline, 'About Us', () {
-                          _openLegalPage('/vendor/about', 'About Us');
-                        }),
-                        _buildDivider(),
-                        _buildListTile(Icons.privacy_tip_outlined, 'Privacy Policy', () {
-                          _openLegalPage('/vendor/privacy-policy', 'Privacy Policy');
-                        }),
-                        _buildDivider(),
-                        _buildListTile(Icons.contact_support_outlined, 'Contact Us', () {
-                          _openLegalPage('/vendor/contact', 'Contact Us');
-                        }),
-                        _buildDivider(),
-                        _buildListTile(Icons.share_outlined, 'Share App', () {
-                          _openLegalPage('/vendor/share', 'Share App');
-                        }),
-                        _buildDivider(),
-                        _buildListTile(Icons.image_outlined, 'Add Image', () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Add Image feature selected.')),
-                          );
-                        }),
-                        _buildDivider(),
-                        _buildListTile(Icons.photo_library_outlined, 'View Gallery', () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('View Gallery feature selected.')),
-                          );
-                        }),
-                        _buildDivider(),
-                        _buildListTile(Icons.star_outline, 'Rate Us', () {
-                          _openLegalPage('/vendor/rate', 'Rate Us');
-                        }),
-                        _buildDivider(),
-                        _buildListTile(Icons.help_outline, 'Faq', () {
-                          _openLegalPage('/vendor/faq', 'Frequently Asked Questions');
-                        }),
+                        const Padding(
+                          padding: EdgeInsets.only(left: 4, bottom: 8),
+                          child: YaanSectionTitle('Other information'),
+                        ),
+                        YaanCard(
+                          padding: const EdgeInsets.all(6),
+                          child: Column(
+                            children: [
+                              _buildListTile(Icons.image_outlined, 'Add Image', () {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Add Image feature selected.')),
+                                );
+                              }),
+                              _buildListTile(Icons.photo_library_outlined, 'View Gallery', () {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('View Gallery feature selected.')),
+                                );
+                              }),
+                              _buildListTile(Icons.description_outlined, 'Terms & Conditions', () {
+                                _openLegalPage('/vendor/terms-and-conditions', 'Terms & Conditions');
+                              }),
+                              _buildListTile(Icons.info_outline, 'About Us', () {
+                                _openLegalPage('/vendor/about', 'About Us');
+                              }),
+                              _buildListTile(Icons.privacy_tip_outlined, 'Privacy Policy', () {
+                                _openLegalPage('/vendor/privacy-policy', 'Privacy Policy');
+                              }),
+                              _buildListTile(Icons.headset_mic_outlined, 'Contact Us', () {
+                                _openLegalPage('/vendor/contact', 'Contact Us');
+                              }),
+                              _buildListTile(Icons.share_outlined, 'Share App', () {
+                                _openLegalPage('/vendor/share', 'Share App');
+                              }),
+                              _buildListTile(Icons.star_outline_rounded, 'Rate Us', () {
+                                _openLegalPage('/vendor/rate', 'Rate Us');
+                              }),
+                              _buildListTile(Icons.help_outline, 'FAQ', () {
+                                _openLegalPage('/vendor/faq', 'Frequently Asked Questions');
+                              }),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                        YaanPrimaryButton(
+                          text: 'Log out',
+                          icon: Icons.logout_rounded,
+                          color: YaanColors.navy,
+                          height: 52,
+                          onPressed: _logout,
+                        ),
+                        const SizedBox(height: 6),
+                        TextButton.icon(
+                          onPressed: _deleteAccount,
+                          icon: const Icon(Icons.delete_forever_outlined, color: YaanColors.red, size: 18),
+                          label: const Text(
+                            'Delete Account',
+                            style: TextStyle(color: YaanColors.red, fontWeight: FontWeight.w600, fontSize: 13),
+                          ),
+                        ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: _logout,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF2B2B2B),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: const Text('LOG OUT', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextButton.icon(
-                    onPressed: _deleteAccount,
-                    icon: const Icon(Icons.delete_forever_outlined, color: Colors.red),
-                    label: const Text(
-                      'Delete Account',
-                      style: TextStyle(color: Colors.red, fontWeight: FontWeight.w600),
-                    ),
-                  ),
-                  const SizedBox(height: 40),
                 ],
               ),
             ),
     );
   }
 
-    Widget _buildKycNotificationCard() {
+  Widget _buildKycNotificationCard() {
     if (_kycStatus == null && _rejectionReason == null && _hotelStatus == null) {
       return const SizedBox();
     }
@@ -320,17 +323,12 @@ class _AccountScreenState extends State<AccountScreen> {
 
     if (isApproved) return const SizedBox();
 
-    final Color bgColor = isRejected
-        ? const Color(0xFFFEF2F2)
-        : (isPending ? const Color(0xFFFFFBEB) : const Color(0xFFF0FDF4));
-
+    final Color bgColor = isRejected ? YaanColors.redTint : (isPending ? YaanColors.amberTint : YaanColors.greenTint);
     final Color borderColor = isRejected
-        ? const Color(0xFFFCA5A5)
-        : (isPending ? const Color(0xFFFDE68A) : const Color(0xFF86EFAC));
-
-    final Color iconColor = isRejected
-        ? const Color(0xFFDC2626)
-        : (isPending ? const Color(0xFFD97706) : const Color(0xFF16A34A));
+        ? const Color(0xFFF8C9C4)
+        : (isPending ? const Color(0xFFF6DDAE) : const Color(0xFFBFE5CD));
+    final Color iconColor = isRejected ? YaanColors.red : (isPending ? YaanColors.amber : YaanColors.green);
+    final Color textColor = isRejected ? const Color(0xFF7A1B12) : (isPending ? YaanColors.amberText : YaanColors.greenText);
 
     final String titleText = isRejected
         ? 'Application Rejected by Admin'
@@ -345,19 +343,12 @@ class _AccountScreenState extends State<AccountScreen> {
         : (_kycMessage ?? 'Please wait for approval by the admin.');
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: bgColor,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: borderColor, width: 1.2),
-        boxShadow: [
-          BoxShadow(
-            color: iconColor.withOpacity(0.08),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: borderColor),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -367,33 +358,16 @@ class _AccountScreenState extends State<AccountScreen> {
                 ? Icons.error_outline_rounded
                 : (isPending ? Icons.hourglass_top_rounded : Icons.check_circle_outline_rounded),
             color: iconColor,
-            size: 24,
+            size: 20,
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  titleText,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: iconColor,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  bodyMessage,
-                  style: TextStyle(
-                    fontSize: 13,
-                    height: 1.4,
-                    color: isRejected
-                        ? const Color(0xFF991B1B)
-                        : (isPending ? const Color(0xFF92400E) : const Color(0xFF166534)),
-                    fontWeight: isRejected ? FontWeight.w600 : FontWeight.normal,
-                  ),
-                ),
+                Text(titleText, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: textColor)),
+                const SizedBox(height: 2),
+                Text(bodyMessage, style: TextStyle(fontSize: 12, height: 1.45, color: textColor)),
               ],
             ),
           ),
@@ -404,87 +378,143 @@ class _AccountScreenState extends State<AccountScreen> {
 
   Widget _buildProfileCard() {
     return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 3,
-            offset: const Offset(0, 2),
-          ),
-        ],
+      decoration: const BoxDecoration(
+        color: YaanColors.navy,
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          CircleAvatar(
-            radius: 30,
-            backgroundColor: const Color(0xFFC0392B).withOpacity(0.1),
-            child: Text(
-              _profile?.ownerName?.isNotEmpty == true
-                  ? _profile!.ownerName.substring(0, 1).toUpperCase()
-                  : (_user?.name?.isNotEmpty == true ? _user!.name.substring(0, 1).toUpperCase() : 'U'),
-              style: const TextStyle(color: Color(0xFFC0392B), fontWeight: FontWeight.bold, fontSize: 22),
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _profile?.ownerName?.isNotEmpty == true ? _profile!.ownerName : (_user?.name ?? 'User Name'),
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  _user?.email ?? 'user@email.com',
-                  style: const TextStyle(color: Colors.grey, fontSize: 12),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  _user?.phone ?? '99999 99999',
-                  style: const TextStyle(color: Colors.grey, fontSize: 12),
-                ),
-              ],
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.edit_square, color: Colors.black87),
-            onPressed: () async {
-              final result = await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => EditProfileScreen(
-                    profile: _profile,
-                    user: _user,
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 12, 16, 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Account',
+                style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w700, letterSpacing: -0.4),
+              ),
+              const SizedBox(height: 18),
+              Row(
+                children: [
+                  Container(
+                    width: 60,
+                    height: 60,
+                    alignment: Alignment.center,
+                    decoration: const BoxDecoration(color: YaanColors.brand, shape: BoxShape.circle),
+                    child: Text(
+                      yaanInitials(_displayName),
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 20),
+                    ),
                   ),
-                ),
-              );
-              if (result == true) {
-                _fetchProfile();
-              }
-            },
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _displayName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 17),
+                        ),
+                        Text(
+                          _user?.email ?? 'user@email.com',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(color: YaanColors.headerSub, fontSize: 12),
+                        ),
+                        Text(
+                          _user?.phone ?? '99999 99999',
+                          style: const TextStyle(color: YaanColors.headerSub, fontSize: 12),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Material(
+                    color: Colors.white.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(14),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(14),
+                      onTap: _openEditProfile,
+                      child: const SizedBox(
+                        width: 44,
+                        height: 44,
+                        child: Icon(Icons.edit_outlined, color: Colors.white, size: 20, semanticLabel: 'Edit profile'),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-        ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQrCard() {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: () {
+          Navigator.push(context, MaterialPageRoute(builder: (_) => const HotelQrScreen()));
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFFF3D3CF)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 46,
+                height: 46,
+                decoration: BoxDecoration(color: YaanColors.brand, borderRadius: BorderRadius.circular(14)),
+                child: const Icon(Icons.qr_code_2_rounded, color: Colors.white, size: 24),
+              ),
+              const SizedBox(width: 14),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Hotel QR Standee & Share', style: TextStyle(color: YaanColors.ink, fontSize: 15, fontWeight: FontWeight.w600)),
+                    SizedBox(height: 2),
+                    Text('Print your QR so drivers can spot book', style: TextStyle(color: YaanColors.muted, fontSize: 12)),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right_rounded, color: YaanColors.muted),
+            ],
+          ),
+        ),
       ),
     );
   }
 
   Widget _buildListTile(IconData icon, String title, VoidCallback onTap) {
-    return ListTile(
-      leading: Icon(icon, color: Colors.black87),
-      title: Text(title, style: const TextStyle(fontSize: 14)),
-      trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+    return InkWell(
+      borderRadius: BorderRadius.circular(16),
       onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+        child: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(color: YaanColors.ground, borderRadius: BorderRadius.circular(12)),
+              child: Icon(icon, color: YaanColors.ink, size: 18),
+            ),
+            const SizedBox(width: 12),
+            Expanded(child: Text(title, style: const TextStyle(color: YaanColors.ink, fontSize: 14, fontWeight: FontWeight.w500))),
+            const Icon(Icons.chevron_right_rounded, color: YaanColors.muted, size: 20),
+          ],
+        ),
+      ),
     );
-  }
-
-  Widget _buildDivider() {
-    return Divider(height: 1, thickness: 1, color: Colors.grey.shade200, indent: 16, endIndent: 16);
   }
 }
 
@@ -503,67 +533,68 @@ class LegalDetailViewerScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: YaanColors.ground,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFC0392B),
-        foregroundColor: Colors.white,
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        foregroundColor: YaanColors.ink,
         elevation: 0,
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+        shape: const Border(bottom: BorderSide(color: Color(0xFFE4E7EC))),
+        title: Text(title, style: const TextStyle(color: YaanColors.ink, fontWeight: FontWeight.w600, fontSize: 17)),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (sections.isNotEmpty)
-              ...sections.map((sec) {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 20.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        sec['title'] ?? '',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF0F172A),
+        child: YaanCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (sections.isNotEmpty)
+                ...sections.map((sec) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 20.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          sec['title'] ?? '',
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: YaanColors.ink),
                         ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        sec['content'] ?? '',
-                        style: const TextStyle(fontSize: 14, height: 1.5, color: Color(0xFF334155)),
-                      ),
-                      if (sec['items'] != null && sec['items'] is List)
-                        ...List<Widget>.from(
-                          (sec['items'] as List).map(
-                            (item) => Padding(
-                              padding: const EdgeInsets.only(top: 4.0, left: 12.0),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text('• ', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFC0392B))),
-                                  Expanded(
-                                    child: Text(
-                                      item.toString(),
-                                      style: const TextStyle(fontSize: 14, height: 1.4, color: Color(0xFF334155)),
+                        const SizedBox(height: 6),
+                        Text(
+                          sec['content'] ?? '',
+                          style: const TextStyle(fontSize: 14, height: 1.5, color: YaanColors.body),
+                        ),
+                        if (sec['items'] != null && sec['items'] is List)
+                          ...List<Widget>.from(
+                            (sec['items'] as List).map(
+                              (item) => Padding(
+                                padding: const EdgeInsets.only(top: 4.0, left: 12.0),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text('• ', style: TextStyle(fontWeight: FontWeight.bold, color: YaanColors.brand)),
+                                    Expanded(
+                                      child: Text(
+                                        item.toString(),
+                                        style: const TextStyle(fontSize: 14, height: 1.4, color: YaanColors.body),
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                    ],
-                  ),
-                );
-              }).toList()
-            else
-              Text(
-                content,
-                style: const TextStyle(fontSize: 14, height: 1.5, color: Color(0xFF334155)),
-              ),
-          ],
+                      ],
+                    ),
+                  );
+                })
+              else
+                Text(
+                  content,
+                  style: const TextStyle(fontSize: 14, height: 1.5, color: YaanColors.body),
+                ),
+            ],
+          ),
         ),
       ),
     );
